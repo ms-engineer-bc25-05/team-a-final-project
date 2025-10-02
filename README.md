@@ -83,9 +83,12 @@ docker compose up
 
 ## 6. 確認済み
 - フロント（Next.js）はホットリロードが効く
-- バックエンド（Express）も起動確認済み
-- /api-test ページでフロント→バックの疎通確認済み
-- .gitignore はルートで統一管理済み
+- バックエンド（Express + TypeScript）も起動確認済み
+- フロントからバックへの API 通信テスト済み
+  - Backend API: http://localhost:4000/api/test
+  - フロント疎通確認ページ: http://localhost:3000/api-test
+- ※テストページは `frontend/src/app/api-test/page.tsx` に配置  
+- ※このページは疎通確認用です。チーム全員の環境が整ったら削除して構いません。
 
 ## 📌 今後追加予定
 - Firebase Emulator
