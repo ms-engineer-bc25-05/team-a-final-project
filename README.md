@@ -26,7 +26,7 @@ http://localhost:3000
 ```bash
 cd backend
 npm init -y
-npm install express
+npm install express cors
 npm install -D typescript ts-node nodemon @types/node @types/express
 npx tsc --init
 src/index.ts
@@ -35,11 +35,14 @@ src/index.ts
 ```ts
 
 import express from "express";
+import cors from "cors";
 
 const app = express();
 const PORT = 4000;
 
-app.get("/", (req, res) => {
+app.use(cors());
+
+app.get("/", (_req, res) => {
   res.send("Hello from Express + TypeScript backend!");
 });
 
@@ -89,6 +92,13 @@ docker compose up
   - フロント疎通確認ページ: http://localhost:3000/api-test
 - ※テストページは `frontend/src/app/api-test/page.tsx` に配置  
 - ※このページは疎通確認用です。チーム全員の環境が整ったら削除して構いません。
+
+## CORS設定について
+- 開発中は `app.use(cors())` を有効化しており、全てのオリジンからのアクセスを許可しています。
+- 本番環境では必要に応じて `origin` を指定して制限してください。
+  ```ts
+  app.use(cors({ origin: "https://yourdomain.com" }));
+  ```
 
 ## 📌 今後追加予定
 - Firebase Emulator
