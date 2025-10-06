@@ -1,3 +1,5 @@
+import FirebaseTest from "@/components/FirebaseTest";
+
 async function getData() {
   const res = await fetch(
     process.env.NEXT_PUBLIC_API_URL + "/api/test",
@@ -13,6 +15,9 @@ export default async function Home() {
     <div className="p-8">
       <h1 className="text-2xl font-bold text-blue-600">Frontend</h1>
       <p>Backend says: {data.message}</p>
+
+      {/* ✅ クライアント側（Firebase確認） */}
+      <FirebaseTest />
     </div>
   );
 }
