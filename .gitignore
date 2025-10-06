@@ -40,3 +40,7 @@ coverage/
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+
+# Local environment variables
+.env.local
+
