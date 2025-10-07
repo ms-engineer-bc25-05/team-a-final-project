@@ -6,6 +6,11 @@ import { auth } from "@/lib/firebase";
 export default function FirebaseTest() {
   useEffect(() => {
     console.log("Firebase Auth instance:", auth);
+
+    //NOTE: Firestore接続テストを追加
+    import("@/lib/firestoreTest").then(({ testGetSurveys }) => {
+      testGetSurveys(); 
+    });
   }, []);
 
   return (
