@@ -59,8 +59,11 @@ export default function AuthForm({ type }: AuthFormProps) {
     setAuthError("");
     try {
       if (isLogin) {
+        // ログイン時は気分選択へ
         await signInWithEmailAndPassword(auth, data.email, data.password);
+        router.push("/mood");
       } else {
+        // 新規登録時はアンケートへ
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           data.email,
@@ -72,12 +75,18 @@ export default function AuthForm({ type }: AuthFormProps) {
             displayName: data.username,
           });
         }
-      }
 
-      router.push("/");
-    } catch (err: any) {
-      console.error("Firebase Auth error:", err);
-      setAuthError(err.code);
+        router.push("/onboarding/survey");
+      }
+    
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Firebase Auth error:", err.message);
+        setAuthError(err.message);
+      } else {
+        console.error("Unknown error:", err);
+        setAuthError("予期せぬエラーが発生しました");
+      }
     }
   };
 

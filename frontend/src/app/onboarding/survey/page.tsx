@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 /**
  * NOTE:
@@ -13,6 +14,8 @@ import { useState } from "react";
  */
 
 export default function SurveyPage() {
+  const router = useRouter();
+
   // 各項目の状態管理
   const [lifestyle, setLifestyle] = useState("");
   const [freeTimeWeekday, setFreeTimeWeekday] = useState("");
@@ -42,7 +45,12 @@ export default function SurveyPage() {
       personalityQ2,
     };
     console.log("アンケート送信データ:", surveyData);
+
+    // TODO: 後で API 連携を追加予定
     alert("アンケートを送信しました！（現在はダミー処理）");
+
+    // 気分選択ページへ遷移
+    router.push("/mood");
   };
 
   return (
