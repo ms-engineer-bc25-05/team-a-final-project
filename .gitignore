@@ -44,3 +44,6 @@ coverage/
 # Local environment variables
 .env.local
 
+# Firebase Secrets
+backend/.env
+backend/credentials/
