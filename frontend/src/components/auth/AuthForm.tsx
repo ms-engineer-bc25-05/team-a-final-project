@@ -15,7 +15,9 @@ import { auth } from "@/lib/firebase";
 import AuthInput from "./AuthInput";
 import AuthError from "./AuthError";
 
-// ✅ 入力ルール（Zodスキーマ）を更新
+// NOTE: 入力ルール（Zodスキーマ）
+// - バリデーションルールを一元管理
+// - 今後API仕様変更時もここを修正すればOK
 const schema = z.object({
   username: z
     .string()
@@ -29,7 +31,7 @@ const schema = z.object({
     .max(20, "パスワードは20文字以内で入力してください"),
 });
 
-// 型を自動生成
+// NOTE: Zodスキーマから型を自動生成（手動定義不要）
 type FormData = z.infer<typeof schema>;
 
 interface AuthFormProps {
@@ -41,6 +43,8 @@ export default function AuthForm({ type }: AuthFormProps) {
   const router = useRouter();
   const [authError, setAuthError] = React.useState("");
 
+  // NOTE: react-hook-form 初期化
+  // - resolver に zodResolver を指定してスキーマバリデーションを連携
   const {
     register,
     handleSubmit,
@@ -49,6 +53,8 @@ export default function AuthForm({ type }: AuthFormProps) {
     resolver: zodResolver(schema),
   });
 
+  // NOTE: 送信処理（現時点ではダミー）
+  // TODO: Firebase Auth や API連携時にここでPOSTリクエストを行う
   const onSubmit = async (data: FormData) => {
     setAuthError("");
     try {
@@ -61,7 +67,6 @@ export default function AuthForm({ type }: AuthFormProps) {
           data.password
         );
 
-        // ✅ 新規登録時に displayName にユーザー名を保存
         if (data.username) {
           await updateProfile(userCredential.user, {
             displayName: data.username,
@@ -78,7 +83,7 @@ export default function AuthForm({ type }: AuthFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* ✅ 新規登録時のみユーザー名を表示 */}
+      {/* NOTE: 新規登録時のみユーザー名を表示 */}
       {!isLogin && (
         <AuthInput
           label="ユーザー名"
@@ -89,6 +94,7 @@ export default function AuthForm({ type }: AuthFormProps) {
         />
       )}
 
+      {/* NOTE: メールアドレス入力欄 */}
       <AuthInput
         label="メールアドレス"
         type="email"
@@ -97,6 +103,7 @@ export default function AuthForm({ type }: AuthFormProps) {
         error={errors.email?.message}
       />
 
+      {/* NOTE: パスワード入力欄 */}
       <AuthInput
         label="パスワード"
         type="password"
@@ -105,8 +112,10 @@ export default function AuthForm({ type }: AuthFormProps) {
         error={errors.password?.message}
       />
 
+      {/* Firebaseエラー（AuthError.tsxで翻訳表示） */}
       <AuthError code={authError} />
-
+      
+      {/* NOTE: 送信ボタン */}
       <button
         type="submit"
         className="w-full bg-[#b9ddee] hover:bg-[#a8d2e8] text-[#2c4d63] font-semibold rounded-2xl py-2 shadow-sm transition"
@@ -114,6 +123,7 @@ export default function AuthForm({ type }: AuthFormProps) {
         {isLogin ? "ログインする" : "登録する"}
       </button>
 
+      {/* NOTE: ページ遷移リンク（ログイン⇔登録） */}
       <p className="text-center text-sm text-[#5d7c8a] mt-4">
         {isLogin ? (
           <>
