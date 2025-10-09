@@ -1,13 +1,18 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-interface AuthFormProps {
-  type: "login" | "register";
-}
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import AuthInput from "./AuthInput";
+import AuthError from "./AuthError";
 
 // NOTE: 入力ルール（Zodスキーマ）
 // - バリデーションルールを一元管理
@@ -23,8 +28,14 @@ const schema = z.object({
 // NOTE: Zodスキーマから型を自動生成（手動定義不要）
 type FormData = z.infer<typeof schema>;
 
+interface AuthFormProps {
+  type: "login" | "register";
+}
+
 export default function AuthForm({ type }: AuthFormProps) {
   const isLogin = type === "login";
+  const router = useRouter();
+  const [authError, setAuthError] = React.useState("");
 
   // NOTE: react-hook-form 初期化
   // - resolver に zodResolver を指定してスキーマバリデーションを連携
@@ -38,41 +49,42 @@ export default function AuthForm({ type }: AuthFormProps) {
 
   // NOTE: 送信処理（現時点ではダミー）
   // TODO: Firebase Auth や API連携時にここでPOSTリクエストを行う
-  const onSubmit = (data: FormData) => {
-    console.log("送信データ:", data);
-    alert(`${isLogin ? "ログイン" : "登録"}情報を送信しました！`);
+  const onSubmit = async (data: FormData) => {
+    setAuthError("");
+    try {
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, data.email, data.password);
+      } else {
+        await createUserWithEmailAndPassword(auth, data.email, data.password);
+      }
+      router.push("/");
+    } catch (err: any) {
+      console.error("Firebase Auth error:",err);
+      setAuthError(err.code);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {/* NOTE: メールアドレス入力欄 */}
-      <div>
-        <label className="block text-sm text-[#2c4d63] mb-1">メールアドレス</label>
-        <input
-          type="email"
-          placeholder="example@mail.com"
-          {...register("email")}
-          className="w-full px-4 py-2 border border-[#c8dbe4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#a5cbe1]"
-        />
-        {/* NOTE: エラーメッセージ表示 */}
-        {errors.email && (
-          <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
-        )}
-      </div>
-
+      <AuthInput
+        label="メールアドレス"
+        type="email"
+        placeholder="example@mail.com"
+        {...register("email")}
+        error={errors.email?.message}
+      />
+      
       {/* NOTE: パスワード入力欄 */}
-      <div>
-        <label className="block text-sm text-[#2c4d63] mb-1">パスワード</label>
-        <input
+        <AuthInput
+          label="パスワード"
           type="password"
           placeholder="••••••••"
           {...register("password")}
-          className="w-full px-4 py-2 border border-[#c8dbe4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#a5cbe1]"
+          error={errors.password?.message}
         />
-        {errors.password && (
-          <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
-        )}
-      </div>
+      {/* Firebaseエラー（AuthError.tsxで翻訳表示） */}
+      <AuthError code={authError} />
 
       {/* NOTE: 送信ボタン */}
       <button
