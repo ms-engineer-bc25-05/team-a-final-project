@@ -1,5 +1,7 @@
 "use client";
 
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -72,6 +74,13 @@ export default function AuthForm({ type }: AuthFormProps) {
             displayName: data.username,
           });
         }
+      
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          username: data.username || "",
+          created_at: serverTimestamp(),
+        });
       }
 
       router.push("/");
