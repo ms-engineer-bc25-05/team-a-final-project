@@ -73,8 +73,13 @@ export default function AuthForm({ type }: AuthFormProps) {
           });
         }
       }
+      // NOTE:　ログイン後のリダイレクト先を条件分岐
+      if (isLogin){
+        router.push("/onboarding/survey");
+      } else {
+        router.push("/");
+      }
 
-      router.push("/");
     } catch (err: any) {
       console.error("Firebase Auth error:", err);
       setAuthError(err.code);
