@@ -10,11 +10,12 @@ import { Laugh, Smile, Frown } from "lucide-react";
  * 気分選択画面 (/mood)
  * - AuthLayout を利用してログイン画面と統一感のあるカードUIに
  * - ユーザーが現在の気分（高い・普通・低い）を3択で選ぶ
- * - 選択後は次の提案ページ (/suggestions) へ遷移
+ * - - 選択後は /api/mood にPOSTしてから提案ページ (/suggestions) へ遷移
  */
 export default function MoodPage() {
   const router = useRouter();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   // 現在選択されている気分（high / normal / low）を保持
   const moods = [
@@ -26,18 +27,36 @@ export default function MoodPage() {
   // 気分アイコン選択時の処理
   const handleSelect = (value: string) => setSelectedMood(value);
 
-  // 「次へ」ボタン押下時の処理
-  const handleSubmit = () => {
+  // 気分をAPIに送信
+  const handleSubmit = async () => {
     if (!selectedMood) {
       alert("気分を選択してください！");
       return;
     }
 
-     // TODO: 今後 POST /api/mood に送信する処理を追加予定
-    console.log("選択された気分:", selectedMood);
+    setLoading(true);
 
-    // 次のページ（提案画面）へ遷移
-    router.push("/suggestions");
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/mood`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mood: selectedMood }),
+      });
+
+      if (!res.ok) throw new Error("送信に失敗しました");
+
+      const data = await res.json();
+      console.log("✅ APIレスポンス:", data);
+
+
+      // 次のページ（提案画面）へ遷移
+      router.push("/suggestions");
+    } catch (error) {
+      console.error("❌ エラー:", error);
+      alert("気分の送信に失敗しました。もう一度お試しください。");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -67,9 +86,14 @@ export default function MoodPage() {
         <div className="mb-10">
           <button
             onClick={handleSubmit}
-            className="w-full bg-[#b9ddee] hover:bg-[#ffd166] hover:text-[#2c4d63] text-[#2c4d63] font-semibold rounded-2xl py-2 shadow-sm transition"
+            disabled={loading}
+            className={`w-full rounded-2xl py-2 font-semibold shadow-sm transition ${
+              loading
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-[#b9ddee] hover:bg-[#ffd166] hover:text-[#2c4d63] text-[#2c4d63]"
+            }`}
           >
-            次へ
+            {loading ? "送信中..." : "次へ"}
           </button>
         </div>
       </div>
