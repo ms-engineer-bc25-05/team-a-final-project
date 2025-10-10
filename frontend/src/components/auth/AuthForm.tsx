@@ -74,13 +74,21 @@ export default function AuthForm({ type }: AuthFormProps) {
             displayName: data.username,
           });
         }
-      
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-          uid: userCredential.user.uid,
-          email: userCredential.user.email,
-          username: data.username || "",
-          created_at: serverTimestamp(),
-        });
+
+        // NOTE: Firestore 登録処理（updatedAt 追加＋エラーハンドリング）
+        try {
+          await setDoc(doc(db, "users", userCredential.user.uid), {
+            uid: userCredential.user.uid,
+            email: userCredential.user.email,
+            username: data.username || "",
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+           });
+         } catch (error) {
+          console.error("Firestore save error:", error);
+          setAuthError("firestore/write-failed");
+          return;
+         }
       }
 
       router.push("/");
