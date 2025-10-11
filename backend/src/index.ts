@@ -2,6 +2,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import { db } from "./config/firebase";
+import moodRouter from "./routes/mood";
 
 dotenv.config(); // ← dotenvの読み込みはここに集約
 
@@ -9,6 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
+app.use(express.json());
 
 // ------------------------------------
 // 基本ルート
@@ -55,6 +57,11 @@ app.get("/health/firebase", async (_req, res) => {
     });
   }
 });
+
+// ------------------------------------
+// 気分API
+// ------------------------------------
+app.use("/api/mood", moodRouter);
 
 // ------------------------------------
 // サーバ起動
