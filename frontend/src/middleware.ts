@@ -1,15 +1,23 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// NOTE: Middleware 本体
+/**
+ * 🔒 Middleware（認証保護）
+ * - Cookie に firebaseToken がない場合は /login にリダイレクト
+ * - /login, /register, /api, /_next などは除外
+ */
 export function middleware(req: NextRequest) {
     const token = req.cookies.get("firebaseToken")?.value;
+    const { pathname } = req.nextUrl;
 
-    // NOTE: ログイン不要なページの例外
+    // NOTE: 認証不要
+    const publicPaths = ["/login", "/register", "/api"];
+
+    // ユーザー認証とは無関係なパスをmiddleware（認証チェック）の対象外とする
     if (
-      req.nextUrl.pathname.startsWith("/login") ||
-      req.nextUrl.pathname.startsWith("/register") ||
-      req.nextUrl.pathname.startsWith("/api")
+      publicPaths.some((path) => pathname.startsWith(path)) ||
+      pathname.startsWith("/_next") ||
+      pathname === "/favicon.ico"
     ) {
       return NextResponse.next();
     }
@@ -24,7 +32,7 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-// NOTE: 適用対象のルート設定
+// NOTE: すべてのルートに middleware を適用
 export const config = {
-    matcher: ["/", "/onboarding/:path", "/dashboard/:path*"],
+    matcher: ["/((?!_next/static|_next/image|favicon.ico|login|register|api).*)"],
 };
