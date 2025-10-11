@@ -52,7 +52,7 @@ export default function SuggestionsPage() {
       alert("提案を選択してください！");
       return;
     }
-    router.push(`/task/${selectedId}/timer`);
+    router.push(`/tasks/${selectedId}/timer`);
   };
 
   return (
