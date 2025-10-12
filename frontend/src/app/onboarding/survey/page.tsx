@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 /**
  * NOTE:
@@ -13,6 +14,8 @@ import { useState } from "react";
  */
 
 export default function SurveyPage() {
+  const router = useRouter();
+
   // 各項目の状態管理
   const [lifestyle, setLifestyle] = useState("");
   const [freeTimeWeekday, setFreeTimeWeekday] = useState("");
@@ -30,40 +33,25 @@ export default function SurveyPage() {
     );
   };
 
-  // 送信処理（ダミーAPIテスト用）
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  // 送信処理
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const surveyData = {
+      lifestyle,
+      freeTimeWeekday,
+      freeTimeWeekend,
+      interests,
+      personalityQ1,
+      personalityQ2,
+    };
+    console.log("アンケート送信データ:", surveyData);
 
-  const surveyData = {
-    lifestyle,
-    freeTimeWeekday,
-    freeTimeWeekend,
-    interests,
-    personalityQ1,
-    personalityQ2,
+    // TODO: 後で API 連携を追加予定
+    alert("アンケートを送信しました！（現在はダミー処理）");
+
+    // 気分選択ページへ遷移
+    router.push("/mood");
   };
-
-  try {
-    // ✅ ダミーAPI（JSONPlaceholder）に送信
-    const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(surveyData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTPエラー: ${response.status}`);
-    }
-
-    const result = await response.json();
-    console.log("送信成功（ダミーAPI）:", result);
-    alert("テスト送信が完了しました！（ダミーAPI）");
-  } catch (error) {
-    console.error("送信エラー:", error);
-    alert("送信に失敗しました。もう一度お試しください。");
-  }
-};
-
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#e5f3f9] to-[#d4edf6] px-6 py-10">
