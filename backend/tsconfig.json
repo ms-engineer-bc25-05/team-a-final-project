@@ -1,16 +1,33 @@
 {
   "compilerOptions": {
+    /* 出力設定 */
     "outDir": "dist",
     "rootDir": "src",
+
+    /* モジュール設定 */
     "module": "commonjs",
     "target": "ES2020",
-    "esModuleInterop": true,
     "moduleResolution": "node",
+
+    /* パス解決を安定させる */
+    "baseUrl": "./src",
+    "paths": {
+      "*": ["*"]
+    },
+
+    /* 互換性・安全性オプション */
+    "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+
+    /* Node型定義 */
     "types": ["node"]
   },
+
+  /* コンパイル対象 */
   "include": ["src"],
+
+  /* 除外対象 */
   "exclude": ["node_modules"]
 }
