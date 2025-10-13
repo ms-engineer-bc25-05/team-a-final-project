@@ -40,8 +40,11 @@ export default function MoodPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/mood`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mood: selectedMood }),
-      });
+        body: JSON.stringify({
+          userId: "abc123", // ← 仮ユーザー（後でFirebase Authで置き換える）
+          mood: selectedMood,
+        }),
+      });      
 
       if (!res.ok) throw new Error("送信に失敗しました");
 
