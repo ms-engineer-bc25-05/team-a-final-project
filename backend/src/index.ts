@@ -10,6 +10,7 @@ import cors from "cors";
 import { db } from "./config/firebase";
 import moodRouter from "./routes/mood";
 import surveysRouter from "./routes/surveys";
+import paymentsRouter from "./routes/payments";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -29,6 +30,7 @@ app.use(express.json());
 // ------------------------------------
 app.use("/api/mood", moodRouter);
 app.use("/api/surveys", surveysRouter);
+app.use("/api/payments", paymentsRouter); // NOTE: Stripe 決済APIルートを登録
 
 // ------------------------------------
 // ベースルート
