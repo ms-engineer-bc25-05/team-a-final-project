@@ -140,3 +140,4 @@ export default function SuggestionsPage() {
     </AuthLayout>
   );
 }
+// NOTE: for PR diff check
