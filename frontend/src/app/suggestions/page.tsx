@@ -133,12 +133,14 @@ export default function SuggestionsPage() {
             {isPending ? "遷移中..." : "開始"}
           </button>
           <button
-            onClick={handleSkip}
-            disabled={isPending}
-            className="border border-gray-300 text-gray-500 font-medium py-2 rounded-xl hover:bg-gray-50 transition"
+          onClick={handleSkip}
+          disabled={isPending}
+          className="border border-[#b3d9e8] text-[#4b7a93] font-medium py-2 rounded-xl transition
+          hover:bg-[#e3f4fa] active:bg-[#cdeaf6] active:text-[#2c4d63]"
           >
             スキップ
           </button>
+
         </motion.div>
 
         {/* NOTE: フッター（今後リンク先を実装予定） */}
