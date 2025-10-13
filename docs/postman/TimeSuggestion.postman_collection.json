@@ -1,37 +1,131 @@
 {
   "info": {
-    "name": "TimeSuggestion API (surveys)",
-    "_postman_id": "9f1b1a7d-1111-2222-3333-444455556666",
-    "description": "Day3-2: /api/surveys POST/GET",
+    "_postman_id": "b4c0f580-6c0f-4a09-9c53-xyz123456789",
+    "name": "TimeSuggestion API Collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "POST /api/surveys",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"userId\": \"abc123\",\n  \"lifestyle\": \"朝型\",\n  \"freeTimeWeekday\": \"06:00〜09:00\",\n  \"freeTimeWeekend\": \"19:00〜22:00\",\n  \"interests\": [\"運動\", \"リラックス\"],\n  \"personalityQ1\": \"とにかく動き出して外に出る\",\n  \"personalityQ2\": \"家でゴロゴロしながら好きなことをする\"\n}"
+      "name": "Surveys API",
+      "item": [
+        {
+          "name": "POST /api/surveys",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"abc123\",\n  \"lifestyle\": \"朝型\",\n  \"freeTimeWeekday\": \"06:00〜09:00\",\n  \"freeTimeWeekend\": \"19:00〜22:00\",\n  \"interests\": [\"運動\", \"リラックス\"],\n  \"personalityQ1\": \"とにかく動き出して外に出る\",\n  \"personalityQ2\": \"家でゴロゴロしながら好きなことをする\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/surveys",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "surveys"]
+            }
+          },
+          "response": []
         },
-        "url": { "raw": "{{baseUrl}}/api/surveys", "host": ["{{baseUrl}}"], "path": ["api", "surveys"] }
-      }
+        {
+          "name": "GET /api/surveys",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/surveys?userId=abc123&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "surveys"],
+              "query": [
+                { "key": "userId", "value": "abc123" },
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     },
     {
-      "name": "GET /api/surveys?userId=abc123&limit=10",
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/api/surveys?userId=abc123&limit=10",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "surveys"],
-          "query": [
-            { "key": "userId", "value": "abc123" },
-            { "key": "limit", "value": "10" }
-          ]
+      "name": "Mood API",
+      "item": [
+        {
+          "name": "POST /api/mood",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"abc123\",\n  \"mood\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/mood",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mood"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/mood",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/mood?userId=abc123&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mood"],
+              "query": [
+                { "key": "userId", "value": "abc123" },
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          },
+          "response": []
         }
-      }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /health/firebase",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health/firebase",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "firebase"]
+            }
+          },
+          "response": []
+        }
+      ]
     }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": { "exec": [], "type": "text/javascript" }
+    },
+    {
+      "listen": "test",
+      "script": { "exec": [], "type": "text/javascript" }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" }
   ]
 }
