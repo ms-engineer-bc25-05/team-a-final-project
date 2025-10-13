@@ -2,11 +2,13 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "Express + TypeScript backend for Time Suggestion App",
-  "main": "dist/index.js",
+  "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec ts-node ./src/index.ts",
+    "dev": "nodemon --watch src --ext ts --exec ts-node ./src/server.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/server.js",
+    "lint": "tsc --noEmit",
+    "test:openai": "ts-node ./test/openai-smoke.ts"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +20,7 @@
     "express": "^5.1.0",
     "firebase-admin": "^12.0.0",
     "stripe": "^19.1.0",
+    "openai": "^4.68.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -1,0 +1,45 @@
+{
+  "info": {
+    "name": "Day4-1 OpenAI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "c6c1d0d5-3c11-4f92-9f80-aaa000111222"
+  },
+  "item": [
+    {
+      "name": "GET /api/openai/ping",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/openai/ping"
+      }
+    },
+    {
+      "name": "GET /api/openai/debug/env",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/openai/debug/env"
+      }
+    },
+    {
+      "name": "GET /api/openai/debug/openai",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/openai/debug/openai"
+      }
+    },
+    {
+      "name": "POST /api/openai/test",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"このAPIが動いているか短く返事して\"\n}"
+        },
+        "url": "{{baseUrl}}/api/openai/test"
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" }
+  ]
+}
