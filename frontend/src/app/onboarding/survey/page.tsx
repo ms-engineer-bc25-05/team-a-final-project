@@ -10,7 +10,8 @@ import { useRouter } from "next/navigation";
  * - 平日・休日の自由時間（共通3時間幅×3択＋自由入力）
  * - 興味分野（複数選択）
  * - タイプ診断（2問）
- * 現時点ではローカルstateで保持し、後続でFirestore/API連携予定。
+ * - 各質問の回答を入力し、/api/surveys へPOST
+ * - 成功時に /mood へ遷移
  */
 
 export default function SurveyPage() {
@@ -34,9 +35,11 @@ export default function SurveyPage() {
   };
 
   // 送信処理
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     const surveyData = {
+      userId: "abc123", // ← 仮ユーザー（将来的に Firebase Auth と連携）
       lifestyle,
       freeTimeWeekday,
       freeTimeWeekend,
@@ -44,13 +47,37 @@ export default function SurveyPage() {
       personalityQ1,
       personalityQ2,
     };
+
     console.log("アンケート送信データ:", surveyData);
 
-    // TODO: 後で API 連携を追加予定
-    alert("アンケートを送信しました！（現在はダミー処理）");
+    console.log("アンケート送信データ:", surveyData);
 
-    // 気分選択ページへ遷移
-    router.push("/mood");
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/surveys`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(surveyData),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        console.error("送信エラー:", result);
+        alert(`送信に失敗しました: ${result.message || "エラー"}`);
+        return;
+      }
+  
+      console.log("送信成功:", result)
+      alert("アンケートを送信しました！");
+
+      // 成功後 → 気分選択ページへ遷移
+      router.push("/mood");
+    } catch (error) {
+      console.error("ネットワークエラー:", error);
+      alert("サーバーへの送信に失敗しました。");
+    }
   };
 
   return (
