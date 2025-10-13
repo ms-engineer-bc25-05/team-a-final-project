@@ -1,0 +1,37 @@
+{
+  "info": {
+    "name": "TimeSuggestion API (surveys)",
+    "_postman_id": "9f1b1a7d-1111-2222-3333-444455556666",
+    "description": "Day3-2: /api/surveys POST/GET",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "POST /api/surveys",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"abc123\",\n  \"lifestyle\": \"朝型\",\n  \"freeTimeWeekday\": \"06:00〜09:00\",\n  \"freeTimeWeekend\": \"19:00〜22:00\",\n  \"interests\": [\"運動\", \"リラックス\"],\n  \"personalityQ1\": \"とにかく動き出して外に出る\",\n  \"personalityQ2\": \"家でゴロゴロしながら好きなことをする\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/surveys", "host": ["{{baseUrl}}"], "path": ["api", "surveys"] }
+      }
+    },
+    {
+      "name": "GET /api/surveys?userId=abc123&limit=10",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/surveys?userId=abc123&limit=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "surveys"],
+          "query": [
+            { "key": "userId", "value": "abc123" },
+            { "key": "limit", "value": "10" }
+          ]
+        }
+      }
+    }
+  ]
+}
