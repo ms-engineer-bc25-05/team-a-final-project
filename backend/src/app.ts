@@ -7,6 +7,7 @@
 import express from "express";
 import cors from "cors";
 import openaiRouter from "./routes/openai";
+import suggestionsRouter from "./routes/suggestions";
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.get("/", (_req, res) => {
 
 // ========= ルート登録 =========
 app.use("/api/openai", openaiRouter);
+app.use("/api/suggestions", suggestionsRouter);
 
 // ========= エラーハンドリング =========
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
