@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import firebase from "firebase/compat/app";
-import { unsubscribe } from "diagnostics_channel";
 
 /**
  * Firebase Authentication の認証状態を監視するカスタムフック
