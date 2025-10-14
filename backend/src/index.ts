@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { db } from "./config/firebase";
 import moodRouter from "./routes/mood";
+import { messaging } from "firebase-admin";
 
 dotenv.config(); // ← dotenvの読み込みはここに集約
 
@@ -45,16 +46,29 @@ app.get("/health/firebase", async (_req, res) => {
     });
 
     res.json({ ok: true, message: "Firestore connection successful" });
-  } catch (error: any) {
+  } catch (error: unknown) {  // NOTE: anyの型エラー修正
     console.error("[Firestore Connection Error]", error);
-    res.status(500).json({
-      ok: false,
-      message: "Firestore connection failed",
-      error: {
-        code: error.code || "unknown",
-        message: error.message || String(error),
-      },
-    });
+
+    if (error instanceof Error) {
+      res.status(500).json({
+        ok: false,
+        message: "Firestore connection failed",
+        error: {
+          code: "unknown",
+          message: error.message,
+        },
+      });
+    } else {
+      // NOTE: 想定外の型（string, number, objectなど）
+      res.status(500).json({
+        ok: false,
+        message: "Firestore connection failed",
+        error: {
+          code: "unknown",
+          message: String(error),
+        },
+      });
+    }
   }
 });
 
