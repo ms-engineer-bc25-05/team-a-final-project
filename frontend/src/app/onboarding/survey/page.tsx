@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 /**
  * NOTE:
@@ -9,10 +10,13 @@ import { useState } from "react";
  * - 平日・休日の自由時間（共通3時間幅×3択＋自由入力）
  * - 興味分野（複数選択）
  * - タイプ診断（2問）
- * 現時点ではローカルstateで保持し、後続でFirestore/API連携予定。
+ * - 各質問の回答を入力し、/api/surveys へPOST
+ * - 成功時に /mood へ遷移
  */
 
 export default function SurveyPage() {
+  const router = useRouter();
+
   // 各項目の状態管理
   const [lifestyle, setLifestyle] = useState("");
   const [freeTimeWeekday, setFreeTimeWeekday] = useState("");
@@ -30,40 +34,51 @@ export default function SurveyPage() {
     );
   };
 
-  // 送信処理（ダミーAPIテスト用）
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  // 送信処理
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const surveyData = {
-    lifestyle,
-    freeTimeWeekday,
-    freeTimeWeekend,
-    interests,
-    personalityQ1,
-    personalityQ2,
-  };
+    const surveyData = {
+      userId: "abc123", // ← 仮ユーザー（将来的に Firebase Auth と連携）
+      lifestyle,
+      freeTimeWeekday,
+      freeTimeWeekend,
+      interests,
+      personalityQ1,
+      personalityQ2,
+    };
 
-  try {
-    // ✅ ダミーAPI（JSONPlaceholder）に送信
-    const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(surveyData),
-    });
+    console.log("アンケート送信データ:", surveyData);
 
-    if (!response.ok) {
-      throw new Error(`HTTPエラー: ${response.status}`);
+    console.log("アンケート送信データ:", surveyData);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/surveys`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(surveyData),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        console.error("送信エラー:", result);
+        alert(`送信に失敗しました: ${result.message || "エラー"}`);
+        return;
+      }
+  
+      console.log("送信成功:", result)
+      alert("アンケートを送信しました！");
+
+      // 成功後 → 気分選択ページへ遷移
+      router.push("/mood");
+    } catch (error) {
+      console.error("ネットワークエラー:", error);
+      alert("サーバーへの送信に失敗しました。");
     }
-
-    const result = await response.json();
-    console.log("送信成功（ダミーAPI）:", result);
-    alert("テスト送信が完了しました！（ダミーAPI）");
-  } catch (error) {
-    console.error("送信エラー:", error);
-    alert("送信に失敗しました。もう一度お試しください。");
-  }
-};
-
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#e5f3f9] to-[#d4edf6] px-6 py-10">

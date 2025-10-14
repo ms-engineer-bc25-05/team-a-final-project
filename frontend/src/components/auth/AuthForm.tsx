@@ -1,6 +1,6 @@
 "use client";
 
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import React from "react";
 import Link from "next/link";
@@ -62,14 +62,35 @@ export default function AuthForm({ type }: AuthFormProps) {
     setAuthError("");
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, data.email, data.password);
-      } else {
-        const userCredential = await createUserWithEmailAndPassword(
+        // NOTE: ログイン処理
+        const userCredential = await signInWithEmailAndPassword(
           auth,
           data.email,
           data.password
         );
 
+        const userRef = doc(db, "users", userCredential.user.uid);
+        const userSnap = await getDoc(userRef);
+
+        const token = await userCredential.user.getIdToken();
+        setCookie("firebaseToken", token);
+
+        if (userSnap.exists()) {
+          router.push("/mood");
+        } else {
+          setAuthError("app/user-not-found-in-firestore");
+          router.push("/register"); // 万が一Firestoreに存在しない場合
+        }
+        return;
+      }
+
+        //NOTE: 新規登録処理
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          data.email,
+          data.password
+        );
+        
         if (data.username) {
           await updateProfile(userCredential.user, {
             displayName: data.username,
@@ -90,11 +111,17 @@ export default function AuthForm({ type }: AuthFormProps) {
           setAuthError("firestore/write-failed");
           return;
          }
-      }
-
-      router.push("/");
-    } catch (err: unknown) {   // NOTE: any型の修正
-      console.error("Firebase Auth error:", err);
+      
+      
+      //NOTE:　Cookie 保存
+      const token = await userCredential.user.getIdToken();
+      setCookie("firebaseToken", token);
+     
+     // NOTE: アンケート画面に遷移
+     router.push("/onboarding/survey");
+    
+     } catch (err: unknown) {   // NOTE: any型の修正
+       console.error("Firebase Auth error:", err);
      
       if (err instanceof FirebaseError) {
         setAuthError(err.code);
