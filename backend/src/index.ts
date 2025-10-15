@@ -6,13 +6,12 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
+import { messaging } from "firebase-admin";
 
 import { db } from "./config/firebase";
 import moodRouter from "./routes/mood";
-
-import { messaging } from "firebase-admin";
-
-dotenv.config(); // ← dotenvの読み込みはここに集約
+import surveysRouter from "./routes/surveys";
+import paymentsRouter from "./routes/payments";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -32,6 +31,7 @@ app.use(express.json());
 // ------------------------------------
 app.use("/api/mood", moodRouter);
 app.use("/api/surveys", surveysRouter);
+app.use("/api/payments", paymentsRouter); // NOTE: Stripe 決済APIルートを登録
 
 // ------------------------------------
 // ベースルート
