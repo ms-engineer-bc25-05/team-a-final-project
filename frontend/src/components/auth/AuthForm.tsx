@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { setCookie } from "cookies-next";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
