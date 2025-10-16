@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import firebase from "firebase/compat/app";
-import { unsubscribe } from "diagnostics_channel";
 
 /**
  * Firebase Authentication の認証状態を監視するカスタムフック
@@ -12,7 +10,7 @@ import { unsubscribe } from "diagnostics_channel";
  * - 未ログインの場合：nullを返す
  */
 export function useAuth() {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState <User | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

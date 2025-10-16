@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { setCookie } from "cookies-next";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -16,7 +18,7 @@ import {
 import { auth } from "@/lib/firebase";
 import AuthInput from "./AuthInput";
 import AuthError from "./AuthError";
-import { setCookie } from "cookies-next";
+import { FirebaseError } from "firebase/app";
 
 // NOTE: 入力ルール（Zodスキーマ）
 // - バリデーションルールを一元管理
@@ -112,14 +114,25 @@ export default function AuthForm({ type }: AuthFormProps) {
           return;
          }
       
+      
       //NOTE:　Cookie 保存
       const token = await userCredential.user.getIdToken();
       setCookie("firebaseToken", token);
-      // NOTE: アンケート画面に遷移
-      router.push("/onboarding/survey");
-    } catch (err: any) {
-      console.error("Firebase Auth error:", err);
-      setAuthError(err.code);
+     
+     // NOTE: アンケート画面に遷移
+     router.push("/onboarding/survey");
+    
+     } catch (err: unknown) {   // NOTE: any型の修正
+       console.error("Firebase Auth error:", err);
+     
+      if (err instanceof FirebaseError) {
+        setAuthError(err.code);
+      } else if (err instanceof Error) {
+        setAuthError(err.message);
+      } else {
+        setAuthError("予期せぬエラーが発生しました");
+      }
+      
     }
   };
 

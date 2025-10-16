@@ -6,6 +6,7 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
+import { messaging } from "firebase-admin";
 
 import { db } from "./config/firebase";
 import moodRouter from "./routes/mood";
@@ -58,16 +59,29 @@ app.get("/health/firebase", async (_req, res) => {
     });
 
     res.json({ ok: true, message: "Firestore connection successful" });
-  } catch (error: any) {
-    console.error("[/health/firebase] error:", error);
-    res.status(500).json({
-      ok: false,
-      message: "Firestore connection failed",
-      error: {
-        code: error?.code ?? "unknown",
-        message: error?.message ?? String(error),
-      },
-    });
+  } catch (error: unknown) {  // NOTE: anyの型エラー修正
+    console.error("[Firestore Connection Error]", error);
+
+    if (error instanceof Error) {
+      res.status(500).json({
+        ok: false,
+        message: "Firestore connection failed",
+        error: {
+          code: "unknown",
+          message: error.message,
+        },
+      });
+    } else {
+      // NOTE: 想定外の型（string, number, objectなど）
+      res.status(500).json({
+        ok: false,
+        message: "Firestore connection failed",
+        error: {
+          code: "unknown",
+          message: String(error),
+        },
+      });
+    }
   }
 });
 
