@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { Check } from "lucide-react";
+import { isApiReady, postJson } from "@/lib/api";
 
 /**
  * NOTE:
@@ -18,20 +19,9 @@ export default function SuggestionsPage() {
   const [skipCount, setSkipCount] = useState(0);
   const [isPending, startTransition] = useTransition();
 
-  /**
-   * NOTE:
-   * skipCountが3以上になったタイミングで遷移を実行。
-   * router.push() は useEffect内で呼び出すことで「レンダー中更新」エラーを回避。
-   */
-  useEffect(() => {
-    if (skipCount >= 3) {
-      startTransition(() => router.push("/rest-check"));
-      setSkipCount(0); // 次回のスキップカウントをリセット
-    }
-  }, [skipCount, router]);
-
   // NOTE: 現時点ではダミーデータ。将来的にAPI連携予定。
-  const suggestions = [
+  // → APIが使える場合は起動時に差し替える（最小変更）
+  const [suggestions, setSuggestions] = useState([
     {
       id: 1,
       emoji: "🚶‍♂️",
@@ -53,7 +43,54 @@ export default function SuggestionsPage() {
       time: "25分",
       description: "短めのリスニングや英単語チェックでOKです。",
     },
-  ];
+  ]);
+
+  // 追加: 起動時にAPIが使えるなら取得して上書き（使えない場合は既存ダミーのまま）
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!isApiReady()) return;
+        // /api/suggestions を叩き、UI用の絵文字/時間を付加して既存の描画に合わせる
+        const res:
+          | { topic: string; count: number; suggestions: { id: string; title: string; reason: string; score: number }[] }
+          | { id: string; title: string; reason: string; score: number }[] = await postJson(
+          "/api/suggestions",
+          { topic: "会議運営", count: 3 }
+        );
+        const list = Array.isArray(res) ? res : res.suggestions;
+
+        const emojis = ["🚶‍♂️", "📚", "✏️", "🧘", "🧹", "🍵"];
+        const times = ["15分", "20分", "25分", "30分"];
+        const mapped = list.slice(0, 3).map((s, i) => ({
+          id: i + 1, // 既存の number id に合わせる
+          emoji: emojis[i % emojis.length],
+          title: s.title,
+          time: times[i % times.length],
+          description: s.reason || "少しだけ手を付けてみましょう。",
+        }));
+
+        if (!cancelled) setSuggestions(mapped);
+      } catch {
+        // 取得失敗時は何もしない（既存ダミーのまま）
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /**
+   * NOTE:
+   * skipCountが3以上になったタイミングで遷移を実行。
+   * router.push() は useEffect内で呼び出すことで「レンダー中更新」エラーを回避。
+   */
+  useEffect(() => {
+    if (skipCount >= 3) {
+      startTransition(() => router.push("/rest-check"));
+      setSkipCount(0); // 次回のスキップカウントをリセット
+    }
+  }, [skipCount, router, startTransition]);
 
   /**
    * NOTE:
@@ -133,14 +170,13 @@ export default function SuggestionsPage() {
             {isPending ? "遷移中..." : "開始"}
           </button>
           <button
-          onClick={handleSkip}
-          disabled={isPending}
-          className="border border-[#b3d9e8] text-[#4b7a93] font-medium py-2 rounded-xl transition
+            onClick={handleSkip}
+            disabled={isPending}
+            className="border border-[#b3d9e8] text-[#4b7a93] font-medium py-2 rounded-xl transition
           hover:bg-[#e3f4fa] active:bg-[#cdeaf6] active:text-[#2c4d63]"
           >
-            スキップ
+            スキップ（{skipCount}/3）
           </button>
-
         </motion.div>
 
         {/* NOTE: フッター（今後リンク先を実装予定） */}

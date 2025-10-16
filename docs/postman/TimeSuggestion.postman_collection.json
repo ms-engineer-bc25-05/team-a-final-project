@@ -1,7 +1,8 @@
-{
+﻿{
   "info": {
-    "_postman_id": "b4c0f580-6c0f-4a09-9c53-xyz123456789",
-    "name": "TimeSuggestion API Collection",
+    "_postman_id": "9f1b1a7d-1111-2222-3333-444455556666",
+    "name": "TimeSuggestion API",
+    "description": "Day3: surveys/mood, Day4: openai & suggestions, health checks",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -12,18 +13,12 @@
           "name": "POST /api/surveys",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json; charset=utf-8" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"abc123\",\n  \"lifestyle\": \"朝型\",\n  \"freeTimeWeekday\": \"06:00〜09:00\",\n  \"freeTimeWeekend\": \"19:00〜22:00\",\n  \"interests\": [\"運動\", \"リラックス\"],\n  \"personalityQ1\": \"とにかく動き出して外に出る\",\n  \"personalityQ2\": \"家でゴロゴロしながら好きなことをする\"\n}"
+              "raw": "{\n  \"userId\": \"abc123\",\n  \"lifestyle\": \"morning\",\n  \"freeTimeWeekday\": \"06:00-09:00\",\n  \"freeTimeWeekend\": \"19:00-22:00\",\n  \"interests\": [\"exercise\", \"relax\"],\n  \"personalityQ1\": \"prefer to go out\",\n  \"personalityQ2\": \"prefer to stay at home\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/surveys",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "surveys"]
-            }
+            "url": { "raw": "{{baseUrl}}/api/surveys", "host": ["{{baseUrl}}"], "path": ["api", "surveys"] }
           },
           "response": []
         },
@@ -32,12 +27,12 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/surveys?userId=abc123&limit=5",
+              "raw": "{{baseUrl}}/api/surveys?userId=abc123&limit=10",
               "host": ["{{baseUrl}}"],
               "path": ["api", "surveys"],
               "query": [
                 { "key": "userId", "value": "abc123" },
-                { "key": "limit", "value": "5" }
+                { "key": "limit", "value": "10" }
               ]
             }
           },
@@ -52,18 +47,9 @@
           "name": "POST /api/mood",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": \"abc123\",\n  \"mood\": \"high\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/mood",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "mood"]
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json; charset=utf-8" }],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"abc123\",\n  \"mood\": \"high\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/mood", "host": ["{{baseUrl}}"], "path": ["api", "mood"] }
           },
           "response": []
         },
@@ -86,46 +72,79 @@
       ]
     },
     {
-      "name": "Health Check",
+      "name": "OpenAI (Day4-1)",
       "item": [
+        { "name": "GET /api/openai/ping", "request": { "method": "GET", "url": "{{baseUrl}}/api/openai/ping" }, "response": [] },
         {
-          "name": "GET /health",
+          "name": "POST /api/openai/test",
           "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "GET /health/firebase",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/health/firebase",
-              "host": ["{{baseUrl}}"],
-              "path": ["health", "firebase"]
-            }
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json; charset=utf-8" }],
+            "body": { "mode": "raw", "raw": "{\n  \"prompt\": \"このAPIが動いているか短く返事して\"\n}" },
+            "url": "{{baseUrl}}/api/openai/test"
           },
           "response": []
         }
       ]
+    },
+    {
+      "name": "Suggestions (Day4-2)",
+      "item": [
+        { "name": "GET /api/suggestions/ping", "request": { "method": "GET", "url": "{{baseUrl}}/api/suggestions/ping" }, "response": [] },
+        { "name": "GET /api/suggestions/examples", "request": { "method": "GET", "url": "{{baseUrl}}/api/suggestions/examples" }, "response": [] },
+        {
+          "name": "POST /api/suggestions (運動)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json; charset=utf-8" }],
+            "body": { "mode": "raw", "raw": "{\n  \"topic\": \"運動\",\n  \"count\": 3\n}" },
+            "url": "{{baseUrl}}/api/suggestions"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/suggestions (学習)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json; charset=utf-8" }],
+            "body": { "mode": "raw", "raw": "{\n  \"topic\": \"学習\",\n  \"count\": 3\n}" },
+            "url": "{{baseUrl}}/api/suggestions"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/suggestions (趣味)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json; charset=utf-8" }],
+            "body": { "mode": "raw", "raw": "{\n  \"topic\": \"趣味\",\n  \"count\": 3\n}" },
+            "url": "{{baseUrl}}/api/suggestions"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/suggestions (生活)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json; charset=utf-8" }],
+            "body": { "mode": "raw", "raw": "{\n  \"topic\": \"生活\",\n  \"count\": 3\n}" },
+            "url": "{{baseUrl}}/api/suggestions"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        { "name": "GET /health", "request": { "method": "GET", "url": "{{baseUrl}}/health" }, "response": [] },
+        { "name": "GET /health/firebase", "request": { "method": "GET", "url": "{{baseUrl}}/health/firebase" }, "response": [] }
+      ]
     }
   ],
   "event": [
-    {
-      "listen": "prerequest",
-      "script": { "exec": [], "type": "text/javascript" }
-    },
-    {
-      "listen": "test",
-      "script": { "exec": [], "type": "text/javascript" }
-    }
+    { "listen": "prerequest", "script": { "exec": [], "type": "text/javascript" } },
+    { "listen": "test", "script": { "exec": [], "type": "text/javascript" } }
   ],
-  "variable": [
-    { "key": "baseUrl", "value": "http://localhost:4000" }
-  ]
+  "variable": [{ "key": "baseUrl", "value": "http://localhost:4000" }]
 }
