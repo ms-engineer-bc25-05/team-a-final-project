@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import { setCookie } from "cookies-next";
 import {
   signInWithEmailAndPassword,
@@ -19,6 +19,7 @@ import { auth } from "@/lib/firebase";
 import AuthInput from "./AuthInput";
 import AuthError from "./AuthError";
 import { FirebaseError } from "firebase/app";
+import { motion } from "framer-motion";
 
 // NOTE: 入力ルール（Zodスキーマ）
 // - バリデーションルールを一元管理
@@ -135,10 +136,15 @@ export default function AuthForm({ type }: AuthFormProps) {
       
     }
   };
-
+  
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* NOTE: 新規登録時のみユーザー名を表示 */}
+    <motion.form
+      onSubmit={handleSubmit(onSubmit)}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+      className="flex flex-col gap-6 w-full max-w-[340px] mx-auto pt-2"
+    >
       {!isLogin && (
         <AuthInput
           label="ユーザー名"
@@ -149,7 +155,6 @@ export default function AuthForm({ type }: AuthFormProps) {
         />
       )}
 
-      {/* NOTE: メールアドレス入力欄 */}
       <AuthInput
         label="メールアドレス"
         type="email"
@@ -158,7 +163,6 @@ export default function AuthForm({ type }: AuthFormProps) {
         error={errors.email?.message}
       />
 
-      {/* NOTE: パスワード入力欄 */}
       <AuthInput
         label="パスワード"
         type="password"
@@ -167,25 +171,34 @@ export default function AuthForm({ type }: AuthFormProps) {
         error={errors.password?.message}
       />
 
-      {/* Firebaseエラー（AuthError.tsxで翻訳表示） */}
       <AuthError code={authError} />
-      
-      {/* NOTE: 送信ボタン */}
-      <button
+
+      {/* NOTE: アニメーション付き送信ボタン */}
+      <motion.button
+        whileHover={{
+          scale: 1.02,
+          boxShadow: "0px 8px 18px rgba(160,200,210,0.25)",
+        }}
+        whileTap={{
+          scale: 0.96,
+          boxShadow: "0px 2px 8px rgba(140,180,190,0.2)",
+        }}
         type="submit"
-        className="w-full bg-[#b9ddee] hover:bg-[#a8d2e8] text-[#2c4d63] font-semibold rounded-2xl py-2 shadow-sm transition"
+        className="w-full bg-gradient-to-r from-[#9EC9D4] to-[#A8D8E6]
+                   text-[#2C4D63] font-semibold py-3 rounded-xl
+                   shadow-[0_4px_10px_rgba(150,190,200,0.25)]
+                   hover:brightness-105 transition-all duration-300"
       >
         {isLogin ? "ログインする" : "登録する"}
-      </button>
+      </motion.button>
 
-      {/* NOTE: ページ遷移リンク（ログイン⇔登録） */}
-      <p className="text-center text-sm text-[#5d7c8a] mt-4">
+      <p className="text-center text-sm text-[#6B94A3] mt-2 leading-relaxed">
         {isLogin ? (
           <>
             アカウントをお持ちでない方は{" "}
             <Link
               href="/register"
-              className="text-[#4d90a6] font-semibold underline-offset-2 hover:underline"
+              className="text-[#4B7A93] font-semibold underline-offset-2 hover:underline"
             >
               新規登録
             </Link>
@@ -195,13 +208,13 @@ export default function AuthForm({ type }: AuthFormProps) {
             すでにアカウントをお持ちの方は{" "}
             <Link
               href="/login"
-              className="text-[#4d90a6] font-semibold underline-offset-2 hover:underline"
+              className="text-[#4B7A93] font-semibold underline-offset-2 hover:underline"
             >
               ログイン
             </Link>
           </>
         )}
       </p>
-    </form>
+    </motion.form>
   );
 }
