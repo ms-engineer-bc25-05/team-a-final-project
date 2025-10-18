@@ -173,7 +173,7 @@ export default function SuggestionsPage() {
             onClick={handleSkip}
             disabled={isPending}
             className="border border-[#b3d9e8] text-[#4b7a93] font-medium py-2 rounded-xl transition
-          hover:bg-[#e3f4fa] active:bg-[#cdeaf6] active:text-[#2c4d63]"`
+          hover:bg-[#e3f4fa] active:bg-[#cdeaf6] active:text-[#2c4d63]"
           >
             スキップ（{skipCount}/3）
           </button>
