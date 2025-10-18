@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
- 
+
 import { setCookie } from "cookies-next";
 import {
   signInWithEmailAndPassword,
@@ -21,15 +21,17 @@ import AuthError from "./AuthError";
 import { FirebaseError } from "firebase/app";
 import { motion } from "framer-motion";
 
-// NOTE: 入力ルール（Zodスキーマ）
-// - バリデーションルールを一元管理
-// - 今後API仕様変更時もここを修正すればOK
+/**
+ * NOTE:
+ * 入力ルール（Zodスキーマ）
+ * - バリデーションルールを一元管理
+ */
 const schema = z.object({
   username: z
     .string()
     .min(2, "ユーザー名は2文字以上で入力してください")
     .max(20, "ユーザー名は20文字以内で入力してください")
-    .optional(), // ← ログイン時は不要なので optional
+    .optional(),
   email: z.string().email("メールアドレスの形式が正しくありません"),
   password: z
     .string()
@@ -37,7 +39,6 @@ const schema = z.object({
     .max(20, "パスワードは20文字以内で入力してください"),
 });
 
-// NOTE: Zodスキーマから型を自動生成（手動定義不要）
 type FormData = z.infer<typeof schema>;
 
 interface AuthFormProps {
@@ -49,8 +50,6 @@ export default function AuthForm({ type }: AuthFormProps) {
   const router = useRouter();
   const [authError, setAuthError] = React.useState("");
 
-  // NOTE: react-hook-form 初期化
-  // - resolver に zodResolver を指定してスキーマバリデーションを連携
   const {
     register,
     handleSubmit,
@@ -59,13 +58,16 @@ export default function AuthForm({ type }: AuthFormProps) {
     resolver: zodResolver(schema),
   });
 
-  // NOTE: 送信処理（現時点ではダミー）
-  // TODO: Firebase Auth や API連携時にここでPOSTリクエストを行う
+  /**
+   * NOTE:
+   * 認証処理
+   */
   const onSubmit = async (data: FormData) => {
     setAuthError("");
+
     try {
       if (isLogin) {
-        // NOTE: ログイン処理
+        // === ログイン処理 ===
         const userCredential = await signInWithEmailAndPassword(
           auth,
           data.email,
@@ -82,50 +84,58 @@ export default function AuthForm({ type }: AuthFormProps) {
           router.push("/mood");
         } else {
           setAuthError("app/user-not-found-in-firestore");
-          router.push("/register"); // 万が一Firestoreに存在しない場合
+          router.push("/register");
         }
         return;
       }
 
-        //NOTE: 新規登録処理
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          data.email,
-          data.password
-        );
-        
-        if (data.username) {
-          await updateProfile(userCredential.user, {
-            displayName: data.username,
-          });
+      // === 新規登録処理 ===
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      );
+
+      if (data.username) {
+        await updateProfile(userCredential.user, {
+          displayName: data.username,
+        });
+      }
+
+      // === Firestore登録（重複チェック付き）===
+      try {
+        const userRef = doc(db, "users", userCredential.user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          console.warn("既に登録済みのユーザーです:", userCredential.user.uid);
+          setAuthError("auth/already-registered");
+          router.push("/login");
+          return;
         }
 
-        // NOTE: Firestore 登録処理（updatedAt 追加＋エラーハンドリング）
-        try {
-          await setDoc(doc(db, "users", userCredential.user.uid), {
-            uid: userCredential.user.uid,
-            email: userCredential.user.email,
-            username: data.username || "",
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-           });
-         } catch (error) {
-          console.error("Firestore save error:", error);
-          setAuthError("firestore/write-failed");
-          return;
-         }
-      
-      
-      //NOTE:　Cookie 保存
+        await setDoc(userRef, {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          username: data.username || "",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } catch (error) {
+        console.error("Firestore save error:", error);
+        setAuthError("firestore/write-failed");
+        return;
+      }
+
+      // === Cookie 保存 ===
       const token = await userCredential.user.getIdToken();
       setCookie("firebaseToken", token);
-     
-     // NOTE: アンケート画面に遷移
-     router.push("/onboarding/survey");
-    
-     } catch (err: unknown) {   // NOTE: any型の修正
-       console.error("Firebase Auth error:", err);
-     
+
+      // === アンケート画面に遷移 ===
+      router.push("/onboarding/survey");
+    } catch (err: unknown) {
+      console.error("Firebase Auth error:", err);
+
       if (err instanceof FirebaseError) {
         setAuthError(err.code);
       } else if (err instanceof Error) {
@@ -133,10 +143,9 @@ export default function AuthForm({ type }: AuthFormProps) {
       } else {
         setAuthError("予期せぬエラーが発生しました");
       }
-      
     }
   };
-  
+
   return (
     <motion.form
       onSubmit={handleSubmit(onSubmit)}
@@ -145,6 +154,7 @@ export default function AuthForm({ type }: AuthFormProps) {
       transition={{ duration: 0.7, ease: "easeOut" }}
       className="flex flex-col gap-6 w-full max-w-[340px] mx-auto pt-2"
     >
+      {/* === ユーザー名 === */}
       {!isLogin && (
         <AuthInput
           label="ユーザー名"
@@ -155,6 +165,7 @@ export default function AuthForm({ type }: AuthFormProps) {
         />
       )}
 
+      {/* === メールアドレス === */}
       <AuthInput
         label="メールアドレス"
         type="email"
@@ -163,6 +174,7 @@ export default function AuthForm({ type }: AuthFormProps) {
         error={errors.email?.message}
       />
 
+      {/* === パスワード === */}
       <AuthInput
         label="パスワード"
         type="password"
@@ -171,9 +183,10 @@ export default function AuthForm({ type }: AuthFormProps) {
         error={errors.password?.message}
       />
 
+      {/* === エラーメッセージ === */}
       <AuthError code={authError} />
 
-      {/* NOTE: アニメーション付き送信ボタン */}
+      {/* === 送信ボタン === */}
       <motion.button
         whileHover={{
           scale: 1.02,
@@ -192,6 +205,7 @@ export default function AuthForm({ type }: AuthFormProps) {
         {isLogin ? "ログインする" : "登録する"}
       </motion.button>
 
+      {/* === ログイン/登録リンク === */}
       <p className="text-center text-sm text-[#6B94A3] mt-2 leading-relaxed">
         {isLogin ? (
           <>

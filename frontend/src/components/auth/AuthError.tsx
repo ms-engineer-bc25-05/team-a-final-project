@@ -15,6 +15,7 @@ const errorMessages: Record<string, string> = {
   "auth/wrong-password": "メールアドレスまたはパスワードが間違っています。",
   "auth/missing-password": "パスワードを入力してください。",
   "auth/too-many-requests": "試行回数が多すぎます。しばらく待ってから再試行してください。",
+  "auth/already-registered": "このアカウントはすでに登録されています。ログインしてください。", 
 
   // === Firestore / アプリ固有エラー ===
   "firestore/write-failed": "ユーザー情報の保存に失敗しました。",
