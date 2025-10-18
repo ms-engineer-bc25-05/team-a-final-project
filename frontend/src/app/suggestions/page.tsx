@@ -7,6 +7,9 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import { Check } from "lucide-react";
 import { isApiReady, postJson } from "@/lib/api";
 
+/** デフォルトのトピック（必要に応じて一括変更可） */
+const DEFAULT_TOPIC = "運動";
+
 /**
  * NOTE:
  * 提案画面 (/suggestions)
@@ -53,10 +56,10 @@ export default function SuggestionsPage() {
         if (!isApiReady()) return;
         // /api/suggestions を叩き、UI用の絵文字/時間を付加して既存の描画に合わせる
         const res:
-          | { topic: string; count: number; suggestions: { id: string; title: string; reason: string; score: number }[] }
-          | { id: string; title: string; reason: string; score: number }[] = await postJson(
+          | { topic: string; count: number; suggestions: { id: string; title: string; reason?: string; score: number }[] }
+          | { id: string; title: string; reason?: string; score: number }[] = await postJson(
           "/api/suggestions",
-          { topic: "会議運営", count: 3 }
+          { topic: DEFAULT_TOPIC, count: 3 }
         );
         const list = Array.isArray(res) ? res : res.suggestions;
 
@@ -118,7 +121,6 @@ export default function SuggestionsPage() {
   return (
     <AuthLayout title="今のあなたへの提案">
       <div className="flex flex-col min-h-[90vh] justify-between pb-10">
-
         {/* NOTE: 提案カードリスト（motionアニメーション付き） */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -148,9 +150,7 @@ export default function SuggestionsPage() {
                   <p className="text-xs text-gray-400 mt-0.5">{s.description}</p>
                 </div>
               </div>
-              {selectedId === s.id && (
-                <Check className="text-green-500 w-5 h-5 flex-shrink-0" strokeWidth={3} />
-              )}
+              {selectedId === s.id && <Check className="text-green-500 w-5 h-5 flex-shrink-0" strokeWidth={3} />}
             </motion.button>
           ))}
         </motion.div>
@@ -173,7 +173,7 @@ export default function SuggestionsPage() {
             onClick={handleSkip}
             disabled={isPending}
             className="border border-[#b3d9e8] text-[#4b7a93] font-medium py-2 rounded-xl transition
-          hover:bg-[#e3f4fa] active:bg-[#cdeaf6] active:text-[#2c4d63]"
+          hover:bg-[#e3f4fa] active:bg-[#cdeaf6] active:text-[#2c4d63]"`
           >
             スキップ（{skipCount}/3）
           </button>
@@ -191,7 +191,6 @@ export default function SuggestionsPage() {
             <span className="text-2xl">⚙️</span> 設定
           </div>
         </div>
-
       </div>
     </AuthLayout>
   );
