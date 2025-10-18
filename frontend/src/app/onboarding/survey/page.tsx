@@ -2,22 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import AuthLayout from "@/components/auth/AuthLayout";
+import FreeTimeSection from "@/components/survey/FreeTimeSection";
 
 /**
  * NOTE:
  * アンケート画面（/onboarding/survey）
  * - 朝型/夜型の生活リズム
- * - 平日・休日の自由時間（共通3時間幅×3択＋自由入力）
+ * - 平日・休日の自由時間（セレクト＋30分刻み）
  * - 興味分野（複数選択）
  * - タイプ診断（2問）
- * - 各質問の回答を入力し、/api/surveys へPOST
- * - 成功時に /mood へ遷移
+ * - /api/surveys へ POST → 成功時 /mood へ遷移
  */
-
 export default function SurveyPage() {
   const router = useRouter();
 
-  // 各項目の状態管理
   const [lifestyle, setLifestyle] = useState("");
   const [freeTimeWeekday, setFreeTimeWeekday] = useState("");
   const [freeTimeWeekend, setFreeTimeWeekend] = useState("");
@@ -25,21 +24,27 @@ export default function SurveyPage() {
   const [personalityQ1, setPersonalityQ1] = useState("");
   const [personalityQ2, setPersonalityQ2] = useState("");
 
-  // 興味分野（複数選択）
   const toggleInterest = (value: string) => {
     setInterests((prev) =>
-      prev.includes(value)
-        ? prev.filter((i) => i !== value)
-        : [...prev, value]
+      prev.includes(value) ? prev.filter((i) => i !== value) : [...prev, value]
     );
   };
 
-  // 送信処理
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!lifestyle || !freeTimeWeekday || !freeTimeWeekend) {
+      alert("未入力の項目があります。");
+      return;
+    }
+
+    if (freeTimeWeekday === "invalid" || freeTimeWeekend === "invalid") {
+      alert("終了時間は開始時間より後に設定してください。");
+      return;
+    }
+
     const surveyData = {
-      userId: "abc123", // ← 仮ユーザー（将来的に Firebase Auth と連携）
+      userId: "abc123",
       lifestyle,
       freeTimeWeekday,
       freeTimeWeekend,
@@ -48,55 +53,43 @@ export default function SurveyPage() {
       personalityQ2,
     };
 
-    console.log("アンケート送信データ:", surveyData);
-
-    console.log("アンケート送信データ:", surveyData);
-
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/surveys`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(surveyData),
       });
 
       const result = await res.json();
 
       if (!res.ok) {
-        console.error("送信エラー:", result);
-        alert(`送信に失敗しました: ${result.message || "エラー"}`);
+        alert(`送信に失敗しました: ${result.message || "不明なエラー"}`);
         return;
       }
-  
-      console.log("送信成功:", result)
-      alert("アンケートを送信しました！");
 
-      // 成功後 → 気分選択ページへ遷移
+      alert("アンケートを送信しました！");
       router.push("/mood");
     } catch (error) {
-      console.error("ネットワークエラー:", error);
-      alert("サーバーへの送信に失敗しました。");
+      alert("ネットワークエラーが発生しました。");
+      console.error(error);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#e5f3f9] to-[#d4edf6] px-6 py-10">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-md p-8">
-        <h1 className="text-2xl font-semibold text-center text-[#2c4d63] mb-6">
-          アンケート
-        </h1>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-
+    <AuthLayout title="アンケート" showCard={false} >
+      <div className="min-h-screen bg-gradient-to-b from-[#FAFCFD] to-[#F2F8FA] px-6 py-10 overflow-y-auto">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6 w-full max-w-md mx-auto text-[#2C4D63]"
+        >
           {/* 生活リズム */}
           <div>
-            <label className="block text-[#2c4d63] font-semibold mb-2">
+            <label className="block font-semibold mb-2 text-base sm:text-lg">
               生活リズム
             </label>
-            <div className="flex gap-4">
+            <div className="flex gap-6">
               {["朝型", "夜型"].map((option) => (
-                <label key={option} className="flex items-center gap-2">
+                <label key={option} className="flex items-center gap-2 text-sm sm:text-base">
                   <input
                     type="radio"
                     name="lifestyle"
@@ -110,150 +103,115 @@ export default function SurveyPage() {
             </div>
           </div>
 
-          {/* 自由時間（ハイブリッド） */}
+          {/* 自由時間 */}
+          <FreeTimeSection
+            label="平日の自由時間（目安）"
+            onChange={setFreeTimeWeekday}
+          />
+          <FreeTimeSection
+            label="休日の自由時間（目安）"
+            onChange={setFreeTimeWeekend}
+          />
+
+          {/* 興味分野 */}
           <div>
-            <label className="block text-[#2c4d63] font-semibold mb-2">
-              平日の自由時間（目安）
-            </label>
-
-            {/* プリセットボタン（平日） */}
-            <div className="grid grid-cols-3 gap-2 mb-2">
-              {["06:00〜09:00", "10:00〜13:00", "19:00〜22:00"].map((time) => (
-                <button
-                  key={time}
-                  type="button"
-                  onClick={() => setFreeTimeWeekday(time)}
-                  className={`px-2 py-1 rounded-xl border text-sm transition ${
-                    freeTimeWeekday === time
-                      ? "bg-[#b9ddee] border-[#a5cbe1] text-[#2c4d63]"
-                      : "bg-white border-[#c8dbe4] text-[#5d7c8a]"
-                  }`}
-                >
-                  {time}
-                </button>
-              ))}
-            </div>
-
-            {/* 自由入力（平日） */}
-            <input
-              type="text"
-              value={freeTimeWeekday}
-              onChange={(e) => setFreeTimeWeekday(e.target.value)}
-              placeholder="例：18:30〜22:00（自由入力も可）"
-              className="w-full border border-[#c8dbe4] rounded-xl p-2"
-            />
-
-            <label className="block text-[#2c4d63] font-semibold mb-2 mt-6">
-              休日の自由時間（目安）
-            </label>
-
-            {/* プリセットボタン（休日） */}
-            <div className="grid grid-cols-3 gap-2 mb-2">
-              {["08:00〜11:00", "13:00〜16:00", "19:00〜22:00"].map((time) => (
-                <button
-                  key={time}
-                  type="button"
-                  onClick={() => setFreeTimeWeekend(time)}
-                  className={`px-2 py-1 rounded-xl border text-sm transition ${
-                    freeTimeWeekend === time
-                      ? "bg-[#b9ddee] border-[#a5cbe1] text-[#2c4d63]"
-                      : "bg-white border-[#c8dbe4] text-[#5d7c8a]"
-                  }`}
-                >
-                  {time}
-                </button>
-              ))}
-            </div>
-
-            {/* 自由入力（休日） */}
-            <input
-              type="text"
-              value={freeTimeWeekend}
-              onChange={(e) => setFreeTimeWeekend(e.target.value)}
-              placeholder="例：09:00〜21:00（自由入力も可）"
-              className="w-full border border-[#c8dbe4] rounded-xl p-2"
-            />
-          </div>
-
-          {/* 興味分野（複数選択） */}
-          <div>
-            <label className="block text-[#2c4d63] font-semibold mb-2">
+            <label className="block font-semibold mb-2 text-base sm:text-lg">
               興味のある分野（複数選択可）
             </label>
-            <div className="flex flex-wrap gap-3">
-              {["運動", "学習", "趣味", "生活改善", "リラックス", "自己啓発"].map(
-                (item) => (
-                  <label key={item} className="flex items-center gap-2">
+
+            {/* メインカテゴリ */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              {["運動", "学習", "趣味", "生活改善", "リラックス", "自己啓発"].map((item) => (
+                <label
+                  key={item}
+                  className="flex items-center gap-2 bg-[#F8FCFD] border border-[#CFE4EB] rounded-xl px-3 py-2 hover:bg-[#E9F7FB] transition"
+                >
+                  <input
+                    type="checkbox"
+                    value={item}
+                    checked={interests.includes(item)}
+                    onChange={() => toggleInterest(item)}
+                  />
+                  {item}
+                </label>
+              ))}
+            </div>
+
+            {/* 趣味サブカテゴリ */}
+            {interests.includes("趣味") && (
+              <div className="ml-2 grid grid-cols-2 gap-3 text-sm text-[#2c4d63]">
+                {["読書", "ゲーム", "映画鑑賞", "買い物"].map((sub) => (
+                  <label
+                    key={sub}
+                    className="flex items-center gap-2 bg-white border border-[#D9E7ED] rounded-xl px-3 py-2 hover:bg-[#F4FAFB] transition"
+                  >
                     <input
                       type="checkbox"
-                      value={item}
-                      checked={interests.includes(item)}
-                      onChange={() => toggleInterest(item)}
+                      value={sub}
+                      checked={interests.includes(sub)}
+                      onChange={() => toggleInterest(sub)}
                     />
-                    {item}
+                    {sub}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* タイプ診断 */}
+          <div>
+            <p className="font-semibold mb-2 text-base sm:text-lg">
+              朝の時間が自由なら、どちらを選びますか？
+            </p>
+            <div className="flex flex-col gap-2 text-sm sm:text-base">
+              {["美味しい朝ごはんをゆっくり楽しむ", "とにかく動き出して外に出る"].map(
+                (option) => (
+                  <label key={option} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="personalityQ1"
+                      value={option}
+                      checked={personalityQ1 === option}
+                      onChange={(e) => setPersonalityQ1(e.target.value)}
+                    />
+                    {option}
                   </label>
                 )
               )}
             </div>
           </div>
 
-          {/* タイプ診断① */}
           <div>
-            <p className="text-[#2c4d63] font-semibold mb-1 sm:whitespace-nowrap sm:overflow-hidden sm:text-ellipsis">
-              朝の時間が自由なら、どちらを選びますか？
+            <p className="font-semibold mb-2 text-base sm:text-lg">
+              休日は、どちらの過ごし方が好きですか？
             </p>
-            <div className="flex flex-col gap-2">
-              {[
-                "美味しい朝ごはんをゆっくり楽しむ",
-                "とにかく動き出して外に出る",
-              ].map((option) => (
-                <label key={option} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="personalityQ1"
-                    value={option}
-                    checked={personalityQ1 === option}
-                    onChange={(e) => setPersonalityQ1(e.target.value)}
-                  />
-                  {option}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* タイプ診断② */}
-          <div>
-            <p className="text-[#2c4d63] font-semibold mb-1 sm:whitespace-nowrap sm:overflow-hidden sm:text-ellipsis mt-4">
-              お休みの日は、どちらの過ごし方が好きですか？
-            </p>
-            <div className="flex flex-col gap-2">
-              {[
-                "家でゴロゴロしながら好きなことをする",
-                "友達と出かけたり新しいことに挑戦する",
-              ].map((option) => (
-                <label key={option} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="personalityQ2"
-                    value={option}
-                    checked={personalityQ2 === option}
-                    onChange={(e) => setPersonalityQ2(e.target.value)}
-                  />
-                  {option}
-                </label>
-              ))}
+            <div className="flex flex-col gap-2 text-sm sm:text-base">
+              {["家でゴロゴロしながら好きなことをする", "友達と出かけたり新しいことに挑戦する"].map(
+                (option) => (
+                  <label key={option} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="personalityQ2"
+                      value={option}
+                      checked={personalityQ2 === option}
+                      onChange={(e) => setPersonalityQ2(e.target.value)}
+                    />
+                    {option}
+                  </label>
+                )
+              )}
             </div>
           </div>
 
           {/* 送信ボタン */}
           <button
             type="submit"
-            className="w-full bg-[#b9ddee] hover:bg-[#a8d2e8] text-[#2c4d63] font-semibold rounded-2xl py-2 shadow-sm transition"
+            className="w-full bg-[#B9DDEE] hover:bg-[#A8D2E8] text-[#2C4D63] font-semibold rounded-2xl py-3 shadow-sm transition text-base sm:text-lg"
           >
             回答を送信
           </button>
         </form>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

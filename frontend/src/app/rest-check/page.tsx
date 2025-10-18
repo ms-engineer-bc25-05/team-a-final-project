@@ -26,24 +26,24 @@ export default function RestCheckPage() {
   const handleContinue = () => router.push("/suggestions");
 
   return (
-    <AuthLayout title="">
+    <AuthLayout title="" showCard={false} whiteBg>
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         // NOTE: スマホでは中央よりやや上に配置し、自然な視線位置に調整
-        className="flex flex-col items-center text-center px-6 pt-16 pb-16 md:pt-24 md:pb-20"
+        className="flex flex-col items-center text-center px-6 pt-16 pb-10"
       >
         <h1 className="text-2xl font-semibold mb-10 text-gray-800">
           今日は休みますか？
         </h1>
 
-        <div className="flex flex-col gap-4 w-full max-w-xs mt-4">
+        <div className="flex flex-col gap-4 w-full max-w-[280px] mt-6">
           {/* NOTE: メインボタン（休む） */}
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleRest}
-            className="w-full bg-[#B7D7E8] text-[#2F4F4F] font-semibold py-3 rounded-2xl shadow-sm hover:bg-[#9CC9E2] transition"
+            className="w-40 bg-[#B9DDEE] hover:bg-[#A5CBE1] text-[#2C4D63] font-semibold py-3 rounded-2xl shadow-sm transition mx-auto"
           >
             休む
           </motion.button>
@@ -52,7 +52,7 @@ export default function RestCheckPage() {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleContinue}
-            className="w-full bg-white text-gray-700 py-3 rounded-2xl border border-gray-300 shadow-sm hover:bg-gray-50 transition"
+            className="w-40 bg-white text-gray-700 py-3 rounded-2xl border border-gray-300 shadow-sm hover:bg-gray-50 transition mx-auto"
           >
             もう少しだけやる
           </motion.button>

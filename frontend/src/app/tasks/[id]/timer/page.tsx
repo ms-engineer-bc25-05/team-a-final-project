@@ -6,7 +6,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
 
 /**
  * NOTE:
- * タイマー画面（最終版）
+ * タイマー画面
  * - クエリからタスク名・所要時間を取得して動的に表示
  * - 円形プログレスバーで残り時間を可視化
  * - 現時点ではローカル制御のみ（API接続は今後実装）
@@ -46,78 +46,128 @@ export default function TimerPage() {
   // TODO: 完了時に /api/tasks/:id/complete へ保存処理を追加予定
   const handleComplete = () => {
     setIsRunning(false);
-    alert("おつかれさま！完了を記録予定です。");
+    alert("おつかれさまです！");
     router.push("/tasks/complete");
   };
 
+//   return (
+//     <AuthLayout showCard={false} showFooter={false} whiteBg>
+//     <div className="flex flex-col items-center justify-center h-[90vh] -mt-8">
+//   {/* タイトル */}
+//   <div className="text-center mt-4">
+//     <p className="text-lg font-semibold text-[#2c4d63] mb-1">
+//       ⏱️「{taskTitle}」の時間
+//     </p>
+//     <p className="text-sm text-gray-500">無理せず、ゆっくりいきましょう。</p>
+//   </div>
+
+//   {/* タイマー */}
+//   <div className="relative w-64 h-64 mt-6 mb-12">
+//     <svg className="w-full h-full" viewBox="0 0 192 192">
+//       <circle cx="96" cy="96" r="88" stroke="#e6edf1" strokeWidth="12" fill="none" />
+//       <circle
+//         cx="96"
+//         cy="96"
+//         r="88"
+//         stroke="#FFD166"
+//         strokeWidth="12"
+//         fill="none"
+//         strokeDasharray={`${2 * Math.PI * 88}`}
+//         strokeDashoffset={`${(2 * Math.PI * 88 * (100 - progress)) / 100}`}
+//         strokeLinecap="round"
+//         className="transition-all duration-500 ease-linear"
+//         transform="rotate(-90 96 96)"
+//       />
+//     </svg>
+//     <div className="absolute inset-0 flex items-center justify-center">
+//       <p className="text-5xl font-bold text-[#2C4D63]">{formatTime(secondsLeft)}</p>
+//     </div>
+//   </div>
+
+//   {/* ボタン */}
+//   <div className="flex gap-4 mb-12">
+//     {!isRunning ? (
+//       <button
+//         onClick={() => setIsRunning(true)}
+//         className="bg-[#FFD166] hover:bg-[#F4C14B] text-[#2C4D63] font-semibold py-3 px-8 rounded-xl shadow-sm transition"
+//       >
+//         開始
+//       </button>
+//     ) : (
+//       <button
+//         onClick={() => setIsRunning(false)}
+//         className="bg-[#B9DDEE] hover:bg-[#A5CBE1] text-[#2C4D63] font-semibold py-3 px-8 rounded-xl shadow-sm transition"
+//       >
+//         一時停止
+//       </button>
+//     )}
+//     <button
+//       onClick={handleComplete}
+//       className="border border-gray-300 text-gray-500 font-medium py-3 px-8 rounded-xl hover:bg-gray-100 transition"
+//     >
+//       完了
+//     </button>
+//   </div>
+// </div>
+//     </AuthLayout>
+//   );
+// }
+
+
   return (
-    <AuthLayout title="">
-      <div className="flex flex-col items-center justify-between h-[440px] py-8">
-        {/* NOTE: 上部タイトル */}
-        <div className="text-center">
-          <p className="text-xl text-[#2c4d63] font-semibold mb-1">
-            ⏱️ 今は「{taskTitle}」の時間。
+    <AuthLayout showCard={false} showFooter={false} whiteBg>
+      <div className="flex flex-col items-center justify-start h-[85vh] -mt-4 pt-[10vh]">
+        {/* タイトル */}
+        <div className="text-center mt-2">
+          <p className="text-xl font-semibold text-[#2c4d63] mb-1">
+            ⏱️「{taskTitle}」の時間
           </p>
-          <p className="text-gray-500 text-sm">無理せず、ゆっくりいきましょう。</p>
+          <p className="text-sm text-gray-500">無理せず、ゆっくりいきましょう。</p>
         </div>
 
-        {/* NOTE: 円形プログレスタイマー */}
-        <div className="relative w-48 h-48 my-6">
+        {/* タイマー */}
+        <div className="relative w-64 h-64 mt-6 mb-8">
           <svg className="w-full h-full" viewBox="0 0 192 192">
-            {/* 背景円 */}
+            <circle cx="96" cy="96" r="88" stroke="#E6EDF1" strokeWidth="12" fill="none" />
             <circle
               cx="96"
               cy="96"
               r="88"
-              stroke="#e6edf1"
-              strokeWidth="12"
-              fill="none"
-            />
-            {/* 進捗円 */}
-            <circle
-              cx="96"
-              cy="96"
-              r="88"
-              stroke="#ffd166"
+              stroke="#FFD166"
               strokeWidth="12"
               fill="none"
               strokeDasharray={`${2 * Math.PI * 88}`}
               strokeDashoffset={`${(2 * Math.PI * 88 * (100 - progress)) / 100}`}
               strokeLinecap="round"
               className="transition-all duration-500 ease-linear"
-              transform="rotate(-90 96 96)" // ← 始点を上から右上に移動して自然な円に
+              transform="rotate(-90 96 96)"
             />
           </svg>
-
-          {/* 残り時間 */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-4xl font-bold text-[#2c4d63]">
-              {formatTime(secondsLeft)}
-            </p>
+            <p className="text-5xl font-bold text-[#2C4D63]">{formatTime(secondsLeft)}</p>
           </div>
         </div>
 
-        {/* NOTE: ボタン群 */}
-        <div className="flex gap-4 mt-4">
+        {/* ボタン */}
+        <div className="flex gap-5 mb-8">
           {!isRunning ? (
             <button
               onClick={() => setIsRunning(true)}
-              className="bg-[#ffd166] hover:bg-[#f4c14b] text-[#2c4d63] font-semibold py-2 px-6 rounded-xl shadow-sm transition"
+              className="w-40 bg-[#FFD166] hover:bg-[#F4C14B] text-[#2C4D63] font-semibold py-3 rounded-xl shadow-sm transition"
             >
               開始
             </button>
           ) : (
             <button
               onClick={() => setIsRunning(false)}
-              className="bg-[#b9ddee] hover:bg-[#a5cbe1] text-[#2c4d63] font-semibold py-2 px-6 rounded-xl shadow-sm transition"
+              className="w-40 bg-[#B9DDEE] hover:bg-[#A5CBE1] text-[#2C4D63] font-semibold py-3 rounded-xl shadow-sm transition"
             >
               一時停止
             </button>
           )}
-
           <button
             onClick={handleComplete}
-            className="border border-gray-300 text-gray-500 font-medium py-2 px-6 rounded-xl hover:bg-gray-100 transition"
+            className="w-40 border border-[#C8D3D8] text-[#5A6A71] font-medium py-3 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition"
           >
             完了
           </button>

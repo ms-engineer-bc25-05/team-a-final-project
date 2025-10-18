@@ -6,8 +6,7 @@ import Link from "next/link";
 /**
  * NOTE:
  * トップページ（未ログイン時の入口）
- * - FocusMe のコンセプトを伝える軽やかな構成。
- * - 背景は朝の光のような柔らかい水色グラデーション。
+ * - コンセプトを伝える軽やかな構成。
  */
 export default function HomePage() {
   return (
@@ -23,7 +22,7 @@ export default function HomePage() {
         transition={{ duration: 0.8 }}
         className="text-3xl font-bold text-[#2C4D63] mb-3 tracking-wide"
       >
-        アプリ名
+        Motibo
       </motion.h1>
 
       {/* キャッチコピー */}
@@ -33,7 +32,7 @@ export default function HomePage() {
         transition={{ delay: 0.3, duration: 0.8 }}
         className="text-[#6B94A3] text-sm mb-10"
       >
-        🌿 今日も少し前に進もう
+        🌿 ちょうどいい時に、ちょうどいい提案を
       </motion.p>
 
       {/* ボタン２つ */}
@@ -62,7 +61,7 @@ export default function HomePage() {
 
       {/* フッター */}
       <footer className="mt-16 text-xs text-[#9AB6C3]">
-        © 2025 アプリ名
+        © 2025 Motibo
       </footer>
     </div>
   );
