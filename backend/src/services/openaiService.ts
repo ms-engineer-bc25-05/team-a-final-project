@@ -21,8 +21,8 @@ export async function simpleChat(prompt: string): Promise<string> {
           },
           { role: "user", content: prompt },
         ],
-        temperature: 0,   // ★ ブレを最小化
-        max_tokens: 20,   // ★ 長文を抑制
+        temperature: 1,   // NOTE: 新しいモデルではサポート外のためデフォルト値である１に修正
+        max_completion_tokens: 20,   // ★ 長文を抑制 NOTE: 新しいモデルに対応するためmax_completion_tokensに置き換え
       },
       { timeout: config.timeoutMs } // timeout は第2引数
     );
