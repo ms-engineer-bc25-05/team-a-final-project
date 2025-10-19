@@ -1,7 +1,6 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
-import { postShort } from "@/lib/api"; // src/lib/api.ts の postShort を利用
 
 export default function ShortTestPage() {
   const [prompt, setPrompt] = useState("ping from client");
@@ -9,13 +8,23 @@ export default function ShortTestPage() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // クライアントから直接バックエンドへ
+  const BASE =
+    process.env.NEXT_PUBLIC_BACKEND_ORIGIN ?? "http://localhost:4000";
+
   async function onSend() {
     setLoading(true);
     setErr(null);
     setResp(null);
     try {
-      const r = await postShort(prompt); // { prompt, reply, note }
-      setResp(r);
+      const res = await fetch(`${BASE}/api/openai/short`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setResp(json); // { prompt, reply, note }
     } catch (e: any) {
       setErr(e?.message ?? String(e));
     } finally {

@@ -1,38 +1,39 @@
+// frontend/src/middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
  * 🔒 Middleware（認証保護）
  * - Cookie に firebaseToken がない場合は /login にリダイレクト
- * - /login, /register, /api, /_next などは除外
+ * - /login, /register, /api, /_next, /short-test などは除外
  */
 export function middleware(req: NextRequest) {
-    const token = req.cookies.get("firebaseToken")?.value;
-    const { pathname } = req.nextUrl;
+  const token = req.cookies.get("firebaseToken")?.value;
+  const { pathname } = req.nextUrl;
 
-    // NOTE: 認証不要
-    const publicPaths = ["/login", "/register", "/api"];
+  // 認証不要パス（/short-test を追加）
+  const publicPaths = ["/login", "/register", "/api", "/short-test"];
 
-    // ユーザー認証とは無関係なパスをmiddleware（認証チェック）の対象外とする
-    if (
-      publicPaths.some((path) => pathname.startsWith(path)) ||
-      pathname.startsWith("/_next") ||
-      pathname === "/favicon.ico"
-    ) {
-      return NextResponse.next();
-    }
+  // 認証チェック対象外
+  if (
+    publicPaths.some((path) => pathname.startsWith(path)) ||
+    pathname.startsWith("/_next") ||
+    pathname === "/favicon.ico"
+  ) {
+    return NextResponse.next();
+  }
 
-    // NOTE: トークンが存在にない場合、　/loginへリダイレクト
-    if (!token) {
+  // トークンなし → /login へ
+  if (!token) {
     const loginUrl = new URL("/login", req.url);
     return NextResponse.redirect(loginUrl);
   }
 
-  // NOTE: トークンが存在する場合はそのまま通す
+  // トークンあり → 通過
   return NextResponse.next();
 }
 
-// NOTE: すべてのルートに middleware を適用
+// すべてのルートに適用（/short-test を除外に追加）
 export const config = {
-    matcher: ["/((?!_next/static|_next/image|favicon.ico|login|register|api).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|login|register|api|short-test).*)"],
 };
