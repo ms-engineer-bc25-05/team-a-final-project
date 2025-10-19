@@ -1,6 +1,8 @@
 "use client";
 
+import "@/lib/firebase";
 import { useState } from "react";
+import { getAuth } from "firebase/auth";
 import AuthLayout from "@/components/auth/AuthLayout";
 
 /**
@@ -23,11 +25,27 @@ export default function PaymentPage() {
             setLoading(true);
             setError(null);
 
+            const auth = getAuth();
+            const currentUser = auth.currentUser;
+
+            if (!currentUser) {
+                setError("ログインが必要です");
+                return;
+            }
+
             // NOTE: バックエンドのStrip Checkout APIを呼び出し
-            const res = await fetch("http://localhost:4000/api/payments/create-checkout-session", {
-                method:"POST",
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+            if (!apiUrl) throw new Error("API URLが設定されていません");
+
+            const res = await fetch(`${apiUrl}/api/payments/create-checkout-session`,{
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userID: currentUser.uid,
+                    userEmail: currentUser.email,
+                })
             });
+
 
             if (!res.ok) throw new Error("リクエストに失敗しました");
 
