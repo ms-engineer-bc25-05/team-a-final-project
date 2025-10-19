@@ -76,7 +76,7 @@ export default function SurveyPage() {
   };
 
   return (
-    <AuthLayout title="アンケート" showCard={false} >
+    <AuthLayout title="アンケート" showCard={false}>
       <div className="min-h-screen bg-gradient-to-b from-[#FAFCFD] to-[#F2F8FA] px-6 py-10 overflow-y-auto">
         <form
           onSubmit={handleSubmit}
@@ -84,12 +84,15 @@ export default function SurveyPage() {
         >
           {/* 生活リズム */}
           <div>
-            <label className="block font-semibold mb-2 text-base sm:text-lg">
+            <label className="block text-[#2c4d63] font-semibold mb-3 text-lg sm:text-xl">
               生活リズム
             </label>
-            <div className="flex gap-6">
+            <div className="flex gap-8 items-center">
               {["朝型", "夜型"].map((option) => (
-                <label key={option} className="flex items-center gap-2 text-sm sm:text-base">
+                <label
+                  key={option}
+                  className="flex items-center gap-3 text-base sm:text-lg font-medium text-[#2c4d63]"
+                >
                   <input
                     type="radio"
                     name="lifestyle"
@@ -115,12 +118,11 @@ export default function SurveyPage() {
 
           {/* 興味分野 */}
           <div>
-            <label className="block font-semibold mb-2 text-base sm:text-lg">
+            <label className="block font-semibold mb-3 text-base sm:text-lg">
               興味のある分野（複数選択可）
             </label>
 
-            {/* メインカテゴリ */}
-            <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="grid grid-cols-2 gap-3 mb-4">
               {["運動", "学習", "趣味", "生活改善", "リラックス", "自己啓発"].map((item) => (
                 <label
                   key={item}
@@ -158,15 +160,18 @@ export default function SurveyPage() {
             )}
           </div>
 
-          {/* タイプ診断 */}
-          <div>
-            <p className="font-semibold mb-2 text-base sm:text-lg">
+          {/* 朝の質問 */}
+          <div className="mt-6">
+            <p className="font-semibold mb-1 text-base sm:text-lg">
               朝の時間が自由なら、どちらを選びますか？
             </p>
-            <div className="flex flex-col gap-2 text-sm sm:text-base">
+            <div className="flex flex-col gap-1 text-sm sm:text-base">
               {["美味しい朝ごはんをゆっくり楽しむ", "とにかく動き出して外に出る"].map(
                 (option) => (
-                  <label key={option} className="flex items-center gap-2">
+                  <label
+                    key={option}
+                    className="flex items-center gap-2 text-[#2c4d63] font-medium"
+                  >
                     <input
                       type="radio"
                       name="personalityQ1"
@@ -181,25 +186,30 @@ export default function SurveyPage() {
             </div>
           </div>
 
-          <div>
-            <p className="font-semibold mb-2 text-base sm:text-lg">
+          {/* 休日の質問 */}
+          <div className="mt-5">
+            <p className="font-semibold mb-1 text-base sm:text-lg">
               休日は、どちらの過ごし方が好きですか？
             </p>
-            <div className="flex flex-col gap-2 text-sm sm:text-base">
-              {["家でゴロゴロしながら好きなことをする", "友達と出かけたり新しいことに挑戦する"].map(
-                (option) => (
-                  <label key={option} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="personalityQ2"
-                      value={option}
-                      checked={personalityQ2 === option}
-                      onChange={(e) => setPersonalityQ2(e.target.value)}
-                    />
-                    {option}
-                  </label>
-                )
-              )}
+            <div className="flex flex-col gap-1 text-sm sm:text-base">
+              {[
+                "家でゴロゴロしながら好きなことをする",
+                "友達と出かけたり新しいことに挑戦する",
+              ].map((option) => (
+                <label
+                  key={option}
+                  className="flex items-center gap-2 text-[#2c4d63] font-medium"
+                >
+                  <input
+                    type="radio"
+                    name="personalityQ2"
+                    value={option}
+                    checked={personalityQ2 === option}
+                    onChange={(e) => setPersonalityQ2(e.target.value)}
+                  />
+                  {option}
+                </label>
+              ))}
             </div>
           </div>
 
