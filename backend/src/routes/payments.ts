@@ -5,7 +5,7 @@ const router = express.Router();
 
 // NOTE:　Stripe インスタンスを初期化
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!,{ 
-    apiVersion: "2024-06-20" as any,
+    apiVersion: "2025-09-30.clover" as any,
 });
 
 // NOTE: Stripe Checkout セッションを生成し、支払い画面のURLを返す
@@ -14,7 +14,7 @@ router.post(
     async (req: Request, res: Response): Promise<void> => {
         try {
           // TODO: 将来的には認証済みユーザーIDをreq.bodyから受け取る
-          const userId = "test-user-001";
+          const { userId, userEmail } = req.body;
 
           // NOTE: Checkout セッションを作成
           const session = await stripe.checkout.sessions.create({
@@ -30,9 +30,7 @@ router.post(
                   quantity: 1,
                 },
             ],
-            metadata: {
-              user_id: userId,
-            },
+            metadata: {userId, userEmail },
             success_url: `${process.env.FRONTEND_URL}/success`,
             cancel_url: `${process.env.FRONTEND_URL}/cancel`,
           });

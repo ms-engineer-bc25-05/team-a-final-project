@@ -47,3 +47,6 @@ coverage/
 # Firebase Secrets
 backend/.env
 backend/credentials/
+
+# Firebase Admin SDK 用の「秘密鍵ファイル」
+serviceAccountKey.json
