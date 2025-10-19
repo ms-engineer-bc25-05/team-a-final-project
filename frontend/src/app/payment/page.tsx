@@ -67,7 +67,7 @@ export default function PaymentPage() {
 
              {/* NOTE: Stripe Checkoutボタン */}
              <button
-               onSubmit={handleCheckout}
+               onClick={handleCheckout}
                disabled={loading}
                className="w-full bg-[#b9ddee] hover:bg-[#a8d2e8] text-[#2c4d63] font-semibold rounded-2xl py-2 shadow-sm transition"
                >
