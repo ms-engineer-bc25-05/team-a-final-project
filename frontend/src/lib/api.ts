@@ -1,5 +1,14 @@
 // frontend/src/lib/api.ts
-const BASE = process.env.NEXT_PUBLIC_API_BASE || "";
+
+/** APIベースURL
+ *  優先: NEXT_PUBLIC_BACKEND_ORIGIN
+ *  互換: NEXT_PUBLIC_API_BASE
+ *  最後: http://localhost:4000
+ */
+const BASE =
+  process.env.NEXT_PUBLIC_BACKEND_ORIGIN?.replace(/\/+$/, "") ||
+  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/+$/, "") ||
+  "http://localhost:4000";
 
 /** Preview などで API ベースURLが未設定/ダミーなら false */
 export function isApiReady(): boolean {
@@ -8,33 +17,63 @@ export function isApiReady(): boolean {
   return !BASE.includes("example.invalid");
 }
 
-type Json = unknown;
-
-export async function getJson<T = Json>(path: string, init?: RequestInit): Promise<T> {
+/** 共通：タイムアウト付き fetch */
+async function request<T>(
+  path: string,
+  init: RequestInit & { timeoutMs?: number } = {}
+): Promise<T> {
   if (!isApiReady()) {
     // API未接続時の安全なダミー（ページ側で分岐してメッセージ表示推奨）
     return [] as unknown as T;
   }
-  const res = await fetch(`${BASE}${path}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`);
-  return res.json() as Promise<T>;
+
+  const { timeoutMs = 20_000, ...rest } = init;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      cache: "no-store",
+      headers: { "Content-Type": "application/json", ...(rest.headers || {}) },
+      signal: controller.signal,
+      ...rest,
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`${rest.method ?? "GET"} ${path} failed: ${res.status} ${text}`.trim());
+    }
+    // JSONのみを想定
+    return (await res.json()) as T;
+  } finally {
+    clearTimeout(id);
+  }
 }
 
-export async function postJson<T = Json>(path: string, body: unknown, init?: RequestInit): Promise<T> {
-  if (!isApiReady()) {
-    return { ok: true, mock: true } as unknown as T;
-  }
-  const res = await fetch(`${BASE}${path}`, {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
-    cache: "no-store",
-    ...init,
-  });
-  if (!res.ok) throw new Error(`POST ${path} failed: ${res.status}`);
-  return res.json() as Promise<T>;
+type Json = unknown;
+
+export async function getJson<T = Json>(path: string, init?: RequestInit & { timeoutMs?: number }) {
+  return request<T>(path, { method: "GET", ...(init || {}) });
+}
+
+export async function postJson<T = Json>(
+  path: string,
+  body: unknown,
+  init?: RequestInit & { timeoutMs?: number }
+) {
+  return request<T>(path, { method: "POST", body: JSON.stringify(body), ...(init || {}) });
+}
+
+/* ========== 個別エンドポイントの薄いラッパ ========== */
+
+/** /api/openai/short のレスポンス型（現状の実装に合わせて） */
+export type ShortResponse = {
+  prompt: string;
+  reply: string;
+  note?: string; // e.g. "fallback: local shortener"
+};
+
+/** ショート要約の呼び出し */
+export function postShort(prompt: string, timeoutMs = 20_000) {
+  return postJson<ShortResponse>("/api/openai/short", { prompt }, { timeoutMs });
 }
