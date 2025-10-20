@@ -1,10 +1,17 @@
 "use client";
 
-import React, { JSX, useState } from "react";
+import React, { JSX } from "react";
 import useSWR from "swr";
 import AuthLayout from "@/components/auth/AuthLayout";
 import Image from "next/image";
 import FooterNav from "@/components/common/FooterNav";
+import { useRouter, usePathname } from "next/navigation";
+
+/**
+ * NOTE:
+ * - 振り返り画面（日・週・月切替対応）
+ * - タブクリックで各ページに遷移 (/records/daily /records/weekly /records/monthly)
+ */
 
 type TabType = "daily" | "weekly" | "monthly";
 
@@ -26,14 +33,12 @@ type HeroInfo = {
   image: string;
 };
 
-// --- fetcher ---
 const fetcher = async (url: string): Promise<RecordsResponse> => {
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch");
   return res.json();
 };
 
-// --- fallbackData (モック) ---
 const fallbackData: RecordsResponse = {
   records: [
     { id: "1", emoji: "🚶‍♂️", title: "散歩", minutes: 20 },
@@ -42,7 +47,13 @@ const fallbackData: RecordsResponse = {
 };
 
 export default function RecordsDailyPage(): JSX.Element {
-  const [tab, setTab] = useState<TabType>("daily");
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // NOTE: 現在のタブをURLから判定
+  const currentTab: TabType =
+    pathname.includes("weekly") ? "weekly" :
+    pathname.includes("monthly") ? "monthly" : "daily";
 
   const hero: HeroInfo = {
     level: 5,
@@ -68,16 +79,16 @@ export default function RecordsDailyPage(): JSX.Element {
             今日のがんばり
           </h1>
 
-          {/* タブ（カプセル型） */}
+          {/* カプセル型タブ */}
           <div className="flex justify-center gap-3 text-sm">
             {(["daily", "weekly", "monthly"] as TabType[]).map((key) => {
-              const isActive = tab === key;
+              const isActive = currentTab === key;
               const label = key === "daily" ? "日" : key === "weekly" ? "週" : "月";
               return (
                 <button
                   key={key}
-                  onClick={() => setTab(key)}
                   type="button"
+                  onClick={() => router.push(`/records/${key}`)}
                   className={`px-7 py-2.5 rounded-full transition-all duration-200 font-medium
                     ${
                       isActive
@@ -113,10 +124,23 @@ export default function RecordsDailyPage(): JSX.Element {
 
         {/* Summary Section */}
         <section className="w-full max-w-[500px] px-6">
+
+        {/* NOTE:
+             エラー時（API未接続 or 通信失敗）
+             - 開発中はモックデータ利用を案内
+             - 本番API実装後はコメントアウト部分に切り替え予定
+        */}
           {error && (
             <p className="mb-6 mx-auto max-w-[480px] rounded-[2rem] border border-[#D5EEF6] bg-[#F4FBFD] p-4 text-sm text-[#2c4d63] text-center">
               モックデータを表示中です
             </p>
+
+            /*
+            // FIXME: API実装後にこちらへ切り替え
+            <p className="mb-6 mx-auto max-w-[480px] rounded-[2rem] border border-[#FADCDC] bg-[#FFF6F6] p-4 text-sm text-[#b33] text-center">
+              データの取得に失敗しました。再読み込みしてください。
+            </p>
+            */
           )}
 
           <div className="mb-7 text-center">
