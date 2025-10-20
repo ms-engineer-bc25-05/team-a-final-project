@@ -2,7 +2,6 @@
     "builds": [
       { "src": "frontend/package.json", "use": "@vercel/next" }
     ],
-    "framework": "nextjs",
-    "rootDirectory": "frontend"
+    "framework": "nextjs"
   }
   
