@@ -3,9 +3,16 @@
 import { useState } from "react";
 import { postShort } from "@/lib/api"; // src/lib/api.ts の postShort を利用
 
+// NOTE: バックエンド /api/openai/short のレスポンス形式と一致
+type ShortResponse = {
+  prompt: string;
+  reply: string;
+  note?: string; 
+};
+
 export default function ShortTestPage() {
   const [prompt, setPrompt] = useState("ping from client");
-  const [resp, setResp] = useState<any>(null);
+  const [resp, setResp] = useState<ShortResponse | null>(null);  // NOTE: 型修正
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -13,11 +20,16 @@ export default function ShortTestPage() {
     setLoading(true);
     setErr(null);
     setResp(null);
+
     try {
-      const r = await postShort(prompt); // { prompt, reply, note }
+      const r: ShortResponse = await postShort(prompt); // { prompt, reply, note }
       setResp(r);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (e) {
+      if (e instanceof Error) {  // NOTE: 型修正
+        setErr(e.message);
+      } else {
+        setErr(String(e));
+      } 
     } finally {
       setLoading(false);
     }

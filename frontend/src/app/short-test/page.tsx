@@ -2,9 +2,16 @@
 
 import { useState } from "react";
 
+// NOTE: バックエンド /api/openai/short のレスポンス形式と一致
+type ShortResponse = {
+  prompt: string;
+  reply: string;
+  note?: string;
+};
+
 export default function ShortTestPage() {
   const [prompt, setPrompt] = useState("ping from client");
-  const [resp, setResp] = useState<any>(null);
+  const [resp, setResp] = useState<ShortResponse | null>(null); // NOTE: 型を修正
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -16,19 +23,27 @@ export default function ShortTestPage() {
     setLoading(true);
     setErr(null);
     setResp(null);
+
     try {
       const res = await fetch(`${BASE}/api/openai/short`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      setResp(json); // { prompt, reply, note }
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
-    } finally {
-      setLoading(false);
+
+      if (!res.ok)  {
+        throw new Error(`HTTP ${res.status}`);
+      }
+        const json: ShortResponse = await res.json();
+        setResp(json); // { prompt, reply, note }
+      } catch (e) {    // NOTE: 型を修正
+        if (e instanceof Error) {
+          setErr(e?.message);
+        } else {
+          setErr(String(e));
+        }
+      } finally {
+          setLoading(false);
     }
   }
 
@@ -63,3 +78,4 @@ export default function ShortTestPage() {
     </main>
   );
 }
+

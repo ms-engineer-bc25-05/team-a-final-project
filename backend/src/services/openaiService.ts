@@ -2,7 +2,7 @@
 import OpenAI from "openai";
 
 const API_KEY = process.env.OPENAI_API_KEY || "";
-const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const MODEL = process.env.OPENAI_MODEL || "gpt-5-nano"; // NOTE: OpenAIのモデルを統一
 
 /**
  * 10文字以内のローカル短縮（句読点や空白は除去して詰める）
@@ -30,27 +30,38 @@ export async function simpleChat(prompt: string): Promise<string> {
   if (!client) return safeFallback();
 
   try {
-    const res = await client.responses.create({
+    const res = await client.responses.create ({
       model: MODEL,
       input: [
-        { role: "system", content: "ユーザー文を10文字以内の日本語で短く返してください。返答は短文のみ。" },
+        {
+          role: "system", content: "ユーザー文を10文字以内の日本語で短く返してください。返答は短文のみ。"
+        },
         { role: "user", content: prompt },
       ],
     });
 
-    const out = (res as any).output_text?.trim() as string | undefined;
-    const text = out || "";
+    const out= res.output_text?.trim() ?? "";
     // OpenAI応答が長すぎる場合もローカルで詰めて10字以内保証
-    return text && text.length <= 10 ? text : localShortener(text || prompt);
-  } catch (e: any) {
+    return out && out.length <= 10 ? out : localShortener(out || prompt);
+  } catch (e) {    // NOTE: 型修正、エラーハンドリング修正
+    if (e instanceof Error) {
+      console.error("🔴 OpenAI error (handled in simpleChat):", { 
+        message: e.message
+      });
+    } else {
+      console.error("🔴 Unknown error in simpleChat:", e);
+    }
+
     // ログだけ残してフォールバック
-    const status = e?.status;
-    const code = e?.code;
-    console.error("🔴 OpenAI error (handled in simpleChat):", { status, code, message: e?.message });
+    const status =
+       typeof e === "object" && e && "status" in e
+         ? (e as { status?: number }).status
+         : undefined;
 
     // よくあるフォールバック対象
-    if (status === 401 || status === 403 || status === 429) return safeFallback();
-
+    if (status === 401 || status === 403 || status === 429) {
+      return safeFallback();
+    }
     // それ以外のネットワーク系・一時障害などもフォールバック
     return safeFallback();
   }
