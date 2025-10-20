@@ -130,18 +130,17 @@ export default function RecordsDailyPage(): JSX.Element {
              - 開発中はモックデータ利用を案内
              - 本番API実装後はコメントアウト部分に切り替え予定
         */}
+
           {error && (
             <p className="mb-6 mx-auto max-w-[480px] rounded-[2rem] border border-[#D5EEF6] bg-[#F4FBFD] p-4 text-sm text-[#2c4d63] text-center">
               モックデータを表示中です
             </p>
-
-            /*
-            // FIXME: API実装後にこちらへ切り替え
-            <p className="mb-6 mx-auto max-w-[480px] rounded-[2rem] border border-[#FADCDC] bg-[#FFF6F6] p-4 text-sm text-[#b33] text-center">
-              データの取得に失敗しました。再読み込みしてください。
-            </p>
-            */
           )}
+          
+        {/* FIXME: API実装後にこちらへ切り替え
+             ※ JSX内には直接コメントアウトのHTMLを置けないため、ここに残しておく
+             <p className="...">データの取得に失敗しました。再読み込みしてください。</p>
+        */}
 
           <div className="mb-7 text-center">
             {isLoading ? (
