@@ -9,7 +9,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
  * 設定ページ (/settings)
  * - アカウント情報（名前・メール・パスワード）
  * - 初回アンケートの再編集（アンケート画面と同一UI）
- * - プラン管理（/settings/payment へ遷移）
+ * - プラン管理（/payment へ遷移）
  * - デモ用（API通信なし）
  */
 export default function SettingsPage() {
@@ -17,7 +17,7 @@ export default function SettingsPage() {
 
   // アカウント情報
   const [name, setName] = useState("taro");
-  const [email, setEmail] = useState("tarou@example.com");
+  const [email, setEmail] = useState("mail@example.com");
   const [password, setPassword] = useState("12345678");
 
   // アンケート項目
