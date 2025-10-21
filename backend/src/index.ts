@@ -105,7 +105,7 @@ app.use((req: Request, res: Response): void => {  // NOTE:型修正
 // エラーハンドラ
 // ------------------------------------
 app.use(
-  (err: unknown, _req: Request, res: Response, _next: NextFunction): void => {. // NOTE:型修正
+  (err: unknown, _req: Request, res: Response, _next: NextFunction): void => { // NOTE:型修正
     console.error("[Express Error Handler]", err); 
     // NOTE: Errorインスタンスとして処理可能な場合
     if (err instanceof Error) {
