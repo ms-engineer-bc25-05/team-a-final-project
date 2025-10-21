@@ -45,21 +45,21 @@ app.use("/api/payments", paymentsRouter); // NOTE: Stripe 決済APIルートを�
 // ------------------------------------
 // ベースルート
 // ------------------------------------
-app.get("/", (_req, res) => {
+app.get("/", (_req: Request, res: Response):void => {  // NOTE:型修正
   res.send("OK");
 });
 
 // ------------------------------------
 // ヘルスチェック
 // ------------------------------------
-app.get("/health", (_req, res) => {
+app.get("/health", (_req: Request, res: Response):void => {  // NOTE:型修正
   res.status(200).json({ ok: true });
 });
 
 // ------------------------------------
 // Firestore接続確認
 // ------------------------------------
-app.get("/health/firebase", async (_req, res) => {
+app.get("/health/firebase", async (_req: Request, res: Response): Promise<Response> => {
   try {
     const testDoc = db.collection("test").doc("connection_check");
     await testDoc.set({
@@ -67,8 +67,9 @@ app.get("/health/firebase", async (_req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    res.json({ ok: true, message: "Firestore connection successful" });
-  } catch (error: unknown) {  // NOTE: anyの型エラー修正
+    return res.json({ ok: true, message: "Firestore connection successful" });
+
+  } catch (error: unknown) {  // NOTE: 型エラー修正
     console.error("[Firestore Connection Error]", error);
 
     if (error instanceof Error) {
@@ -80,9 +81,9 @@ app.get("/health/firebase", async (_req, res) => {
           message: error.message,
         },
       });
-    } else {
-      // NOTE: 想定外の型（string, number, objectなど）
-      res.status(500).json({
+    } 
+    // NOTE: 想定外の型（string, number, objectなど）
+    return res.status(500).json({
         ok: false,
         message: "Firestore connection failed",
         error: {
@@ -90,14 +91,13 @@ app.get("/health/firebase", async (_req, res) => {
           message: String(error),
         },
       });
-    }
   }
 });
 
 // ------------------------------------
 // 404 ハンドラ
 // ------------------------------------
-app.use((req, res) => {
+app.use((req: Request, res: Response): void => {  // NOTE:型修正
   res.status(404).json({ ok: false, message: "Not Found", path: req.path });
 });
 
@@ -105,12 +105,22 @@ app.use((req, res) => {
 // エラーハンドラ
 // ------------------------------------
 app.use(
-  (err: any, _req: Request, res: Response, _next: NextFunction) => {
-    console.error("[Express Error Handler]", err);
-    res.status(err?.status || 500).json({
+  (err: unknown, _req: Request, res: Response, _next: NextFunction): void => { // NOTE:型修正
+    console.error("[Express Error Handler]", err); 
+    // NOTE: Errorインスタンスとして処理可能な場合
+    if (err instanceof Error) {
+      res.status(500).json({
+        ok: false,
+        message: err.message,
+        code: "internal_error",
+      });
+      return;
+    }
+    res.status(500).json({
       ok: false,
-      message: err?.message || "Internal Server Error",
-      code: err?.code || "internal",
+      message: "Internal Server Error",
+      code: "unknown_error",
+      error: String(err),
     });
   }
 );
@@ -118,7 +128,7 @@ app.use(
 // ------------------------------------
 // サーバー起動
 // ------------------------------------
-app.listen(PORT, () => {
+app.listen(PORT, (): void => {
   console.log(`✅ Backend running on http://localhost:${PORT}`);
 });
 

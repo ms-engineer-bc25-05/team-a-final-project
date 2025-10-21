@@ -1,7 +1,10 @@
 // backend/src/routes/surveys.ts
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { db, FieldValue } from "../config/firebase";
 import { surveySchema } from "../schemas/survey";
+
+// NOTE: Firestore ドキュメントの型（Zod スキーマから自動推論）
+type SurveyInput = typeof surveySchema._type
 
 const router = Router();
 
@@ -18,7 +21,7 @@ const router = Router();
  *   "personalityQ2": "家でゴロゴロしながら好きなことをする"
  * }
  */
-router.post("/", async (req, res) => {
+router.post("/", async (req:Request, res: Response): Promise<Response> => {
   try {
     const parsed = surveySchema.safeParse(req.body);
     if (!parsed.success) {
@@ -30,7 +33,7 @@ router.post("/", async (req, res) => {
     }
 
     // userId を含めたままトップレベル 'surveys' に保存
-    const payload = parsed.data;
+    const payload: SurveyInput = parsed.data;
 
     const ref = await db.collection("surveys").add({
       ...payload,
@@ -41,8 +44,9 @@ router.post("/", async (req, res) => {
     return res
       .status(201)
       .json({ ok: true, message: "Survey saved successfully", id: ref.id });
-  } catch (err: any) {
-    console.error("[POST /api/surveys] error:", err);
+  } catch (err) { // NOTE: 型の修正
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[POST /api/surveys] error:", message);
     return res.status(500).json({ ok: false, message: "Internal Server Error" });
   }
 });
@@ -53,7 +57,7 @@ router.post("/", async (req, res) => {
  * - limit: 1〜50 (デフォルト10)
  * ＊必要に応じて Firestore の複合インデックス（surveys: userId ASC × createdAt DESC）を作成してください
  */
-router.get("/", async (req, res) => {
+router.get("/", async (req: Request, res: Response): Promise<Response> => {
   try {
     const userId = String(req.query.userId || "");
     const limitRaw = Number(req.query.limit || 10);
@@ -87,17 +91,27 @@ router.get("/", async (req, res) => {
     });
 
     return res.json({ ok: true, items });
-  } catch (e: any) {
+  } catch (e) {
     // インデックス未作成時の親切メッセージ
-    if (e?.code === 9 && typeof e?.message === "string" && e.message.includes("create_composite=")) {
-      const m = e.message.match(/https:\/\/console\.firebase\.google\.com\/[^\s"]+/);
+    if (
+      typeof e === "object" &&
+      e &&
+      "code" in e &&
+      (e as{ code:number }).code === 9 &&
+      "message" in e &&
+      typeof (e as { message: string }).message === "string" &&
+      (e as { message: string }).message.includes("create_composite=")
+    ) { 
+      const message = (e as { message: string }).message;
+      const m = message.match(/https:\/\/console\.firebase\.google\.com\/[^\s"]+/);
       return res.status(400).json({
         ok: false,
         message: "Firestore index required. Open the URL to create the composite index.",
         indexUrl: m?.[0] ?? null,
       });
     }
-    console.error("[GET /api/surveys] error:", e);
+    const message = e instanceof Error ? e.message : String(e);
+    console.error("[GET /api/surveys] error:", message);
     return res.status(500).json({ ok: false, message: "Internal Server Error" });
   }
 });

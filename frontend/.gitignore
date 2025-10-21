@@ -1,1 +1,50 @@
-.vercel
+# --- Dependencies ---
+node_modules/
+.pnp/
+.pnp.js
+
+# --- Next.js / Build outputs ---
+.next/
+.next/cache/
+out/
+.swc/
+.turbo/
+.vercel/
+
+# --- Env files (real ones ignored; examples tracked) ---
+.env
+.env.*
+!.env.example
+!.env.*.example
+.env.local
+.env.*.local
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.eslintcache
+
+# --- Testing / Coverage ---
+coverage/
+
+# --- Editors / IDE ---
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# --- TypeScript ---
+*.tsbuildinfo
+
+# --- Storybook (if used) ---
+storybook-static/
+.storybook-out/
