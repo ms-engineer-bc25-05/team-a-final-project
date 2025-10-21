@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-// NOTE: バックエンド /api/openai/short のレスポンス形式と一致
+// バックエンド /api/openai/short のレスポンス形式
 type ShortResponse = {
   prompt: string;
   reply: string;
@@ -11,13 +11,9 @@ type ShortResponse = {
 
 export default function ShortTestPage() {
   const [prompt, setPrompt] = useState("ping from client");
-  const [resp, setResp] = useState<ShortResponse | null>(null); // NOTE: 型を修正
+  const [resp, setResp] = useState<ShortResponse | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // クライアントから直接バックエンドへ
-  const BASE =
-    process.env.NEXT_PUBLIC_BACKEND_ORIGIN ?? "http://localhost:4000";
 
   async function onSend() {
     setLoading(true);
@@ -25,25 +21,21 @@ export default function ShortTestPage() {
     setResp(null);
 
     try {
-      const res = await fetch(`${BASE}/api/openai/short`, {
+      // ★ 相対パスに変更（next.config.ts の rewrites 経由で http://localhost:4000 へ）
+      const res = await fetch(`/api/openai/short`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
       });
 
-      if (!res.ok)  {
-        throw new Error(`HTTP ${res.status}`);
-      }
-        const json: ShortResponse = await res.json();
-        setResp(json); // { prompt, reply, note }
-      } catch (e) {    // NOTE: 型を修正
-        if (e instanceof Error) {
-          setErr(e?.message);
-        } else {
-          setErr(String(e));
-        }
-      } finally {
-          setLoading(false);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const json: ShortResponse = await res.json();
+      setResp(json);
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -78,4 +70,3 @@ export default function ShortTestPage() {
     </main>
   );
 }
-

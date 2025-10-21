@@ -3,37 +3,52 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * 🔒 Middleware（認証保護）
- * - Cookie に firebaseToken がない場合は /login にリダイレクト
- * - /login, /register, /api, /_next, /short-test などは除外
+ * 認証ミドルウェア
+ * - firebaseToken が無い場合は /login にリダイレクト
+ * - 下記 publicPaths（および Next.js の内部アセット）は常に許可
  */
 export function middleware(req: NextRequest) {
-  const token = req.cookies.get("firebaseToken")?.value;
   const { pathname } = req.nextUrl;
+  const token = req.cookies.get("firebaseToken")?.value;
 
-  // 認証不要パス（/short-test を追加）
-  const publicPaths = ["/login", "/register", "/api", "/short-test"];
+  // 認証不要のプレフィックス（先頭一致）
+  const publicPaths = [
+    "/login",
+    "/register",
+    "/api",
+    "/short-test",
+    "/suggestions-test", // ← 追加（接続確認ページを公開）
+    "/onboarding",
+    "/rest-done",
+    "/records",
+    "/settings",
+  ];
 
-  // 認証チェック対象外
-  if (
-    publicPaths.some((path) => pathname.startsWith(path)) ||
+  // Next.js の内部リソースや favicon は常に許可
+  const isAlwaysAllowed =
     pathname.startsWith("/_next") ||
-    pathname === "/favicon.ico"
-  ) {
+    pathname === "/favicon.ico" ||
+    pathname.startsWith("/icons") || // 必要なら追加
+    pathname.startsWith("/images");  // 必要なら追加
+
+  if (isAlwaysAllowed || publicPaths.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  // トークンなし → /login へ
+  // 認証必須ルート：トークンなければ /login へ
   if (!token) {
     const loginUrl = new URL("/login", req.url);
+    // 直前の行き先を保持したい場合は以下を有効化
+    // loginUrl.searchParams.set("next", pathname + req.nextUrl.search);
     return NextResponse.redirect(loginUrl);
   }
 
-  // トークンあり → 通過
   return NextResponse.next();
 }
 
-// すべてのルートに適用（/short-test を除外に追加）
+// すべてのルートに適用しつつ、公開パスは除外
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|login|register|api|short-test).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icons|images|login|register|api|short-test|suggestions-test|onboarding|rest-done|records|settings).*)",
+  ],
 };
