@@ -5,12 +5,14 @@ import listEndpoints from "express-list-endpoints";
 
 import openaiRouter from "./routes/openai";
 import suggestionsRouter from "./routes/suggestions";
+import sessionsRouter from "./routes/sessions";
 
 const app = express();
 
 // --- Middlewares ---
 app.use(cors());
 app.use(express.json());
+app.use("/api/sessions", sessionsRouter);
 
 // すべての JSON 応答を UTF-8 で返す
 app.use((_req: Request, res: Response, next: NextFunction): void => {

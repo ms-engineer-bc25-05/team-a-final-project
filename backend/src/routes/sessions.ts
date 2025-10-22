@@ -2,14 +2,58 @@
  * NOTE:
  * /api/sessions ルートでは、ユーザーの行動セッション（SessionData）を
  * Firestore に記録・取得・更新する処理をします。
- * セッション状態の更新（停止・再開・完了）」を追加しました。
+ * このファイルには「作成・一時停止・再開・完了」の4種類を定義します。
  */
 
 import express, { Request, Response } from "express";
 import admin from "firebase-admin";
 import { db } from "../config/firebase";
+import { SessionData } from "../types/session";
 
 const router = express.Router();
+
+/**
+ * セッション新規作成 API
+ * - ユーザーが行動を開始した際に呼び出される。
+ * - Firestoreの「sessions」コレクションにドキュメントを追加。
+ */
+router.post("/", async (req: Request, res: Response): Promise<void> => {
+  const { userId, activityType, suggestion } = req.body;
+
+  if (!userId) {
+    res.status(400).json({ ok: false, message: "userId は必須です。" });
+    return;
+  }
+
+  try {
+    const startTime = new Date().toISOString();
+
+    // NOTE: 型に準拠したセッションデータを作成
+    const sessionData: SessionData = {
+      userId,
+      activityType,
+      suggestion,
+      startTime,
+      status: "active",
+      pauseHistory: [],
+    };
+
+    // Firestore に登録
+    const newDoc = await db.collection("sessions").add({
+      ...sessionData,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(201).json({
+      ok: true,
+      id: newDoc.id,
+      message: "セッションを作成しました。",
+    });
+  } catch (error) {
+    console.error("[POST /sessions] Error:", error);
+    res.status(500).json({ ok: false, message: "セッション作成に失敗しました。" });
+  }
+});
 
 /**
  * セッションを「一時停止」に更新するAPI
