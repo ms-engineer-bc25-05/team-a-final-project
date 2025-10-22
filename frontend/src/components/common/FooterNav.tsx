@@ -17,7 +17,7 @@ export default function FooterNav() {
 
   const items = [
     { icon: Home, label: "ホーム", path: "/mood" },
-    { icon: BarChart3, label: "記録", path: "/records" },
+    { icon: BarChart3, label: "記録", path: "/records/daily" },
     { icon: Settings, label: "設定", path: "/settings" },
   ];
 
