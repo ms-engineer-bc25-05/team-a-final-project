@@ -13,6 +13,7 @@ import { db } from "./config/firebase";
 import moodRouter from "./routes/mood";
 import surveysRouter from "./routes/surveys";
 import paymentsRouter from "./routes/payments";
+import sessionsRouter from "./routes/sessions";
 
 
 const app = express();
@@ -39,6 +40,7 @@ app.use(express.json());
 app.use("/api/mood", moodRouter);
 app.use("/api/surveys", surveysRouter);
 app.use("/api/payments", paymentsRouter); // NOTE: Stripe 決済APIルートを登録
+app.use("/api/sessions", sessionsRouter); // NOTE: 行動セッション管理APIルートを登録
 
 
 
