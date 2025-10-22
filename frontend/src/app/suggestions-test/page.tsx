@@ -3,7 +3,26 @@
 
 import { useState } from 'react';
 
-type Suggestion = { id?: string; title?: string; score?: number; minutes?: number; [k: string]: unknown };
+type Suggestion = {
+  id?: string;
+  title?: string;
+  score?: number;
+  minutes?: number;
+  [k: string]: unknown;
+};
+
+function isSuggestionArray(x: unknown): x is Suggestion[] {
+  return Array.isArray(x) && x.every((i) => typeof i === 'object' && i !== null);
+}
+
+function extractSuggestions(data: unknown): Suggestion[] {
+  if (isSuggestionArray(data)) return data;
+  if (typeof data === 'object' && data !== null) {
+    const s = (data as Record<string, unknown>).suggestions;
+    if (isSuggestionArray(s)) return s;
+  }
+  return [];
+}
 
 export default function SuggestionsTestPage() {
   const [topic, setTopic] = useState('運動');
@@ -14,17 +33,28 @@ export default function SuggestionsTestPage() {
   const [err, setErr] = useState('');
 
   const fetchSuggestions = async () => {
-    setLoading(true); setErr(''); setStatus(''); setItems([]);
+    setLoading(true);
+    setErr('');
+    setStatus('');
+    setItems([]);
+
     try {
       const url = `/api/suggestions?topic=${encodeURIComponent(topic)}&count=${count}`;
       const res = await fetch(url, { cache: 'no-store' });
       setStatus(`${res.status} ${res.statusText}`);
-      const data = await res.json().catch(() => ({} as any));
-      const list = Array.isArray(data) ? data : (data?.suggestions ?? []);
-      setItems(list ?? []);
-      if (res.status === 429 && (!list || list.length === 0)) setErr('429（フォールバック）：suggestions が空でした');
-    } catch (e: any) {
-      setErr(`Network Error: ${e?.message ?? String(e)}`);
+
+      const data: unknown = await res.json().catch(() => ({} as unknown));
+      const list = extractSuggestions(data);
+      setItems(list);
+
+      if (res.status === 429 && list.length === 0) {
+        setErr('429（フォールバック）：suggestions が空でした');
+      } else if (res.status !== 200 && res.status !== 429) {
+        setErr(`Unexpected: ${res.status} ${res.statusText}`);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(`Network Error: ${msg}`);
     } finally {
       setLoading(false);
     }
