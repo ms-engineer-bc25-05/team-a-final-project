@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { Check } from "lucide-react";
 import { isApiReady, postJson } from "@/lib/api";
+import FooterNav from "@/components/common/FooterNav";
 
 /** デフォルトのトピック（必要に応じて一括変更可） */
 const DEFAULT_TOPIC = "運動";
@@ -119,79 +120,87 @@ export default function SuggestionsPage() {
   };
 
   return (
-    <AuthLayout title="今のあなたへの提案">
-      <div className="flex flex-col min-h-[90vh] justify-between pb-10">
-        {/* NOTE: 提案カードリスト（motionアニメーション付き） */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="flex flex-col gap-5 mt-16 mb-6 px-3"
-        >
+    <AuthLayout showHeader={false} showCard={false}>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col justify-between min-h-[100dvh] px-5 pt-12 pb-[calc(env(safe-area-inset-bottom)+80px)]"
+      >
+        {/* タイトル */}
+        <h1 className="text-2xl font-bold text-[#2c4d63] mb-6 text-center tracking-wide">
+          あなたへの提案
+        </h1>
+
+        {/* 提案カード群 */}
+        <div className="flex flex-col gap-4 sm:gap-5">
           {suggestions.map((s) => (
             <motion.button
               key={s.id}
-              whileTap={{ scale: 0.96 }}
-              transition={{ duration: 0.1 }}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => setSelectedId(s.id)}
-              className={`flex items-center justify-between rounded-2xl border px-4 py-3 bg-white transition shadow-sm ${
-                selectedId === s.id
-                  ? "border-[#a5cbe1] bg-[#f4fbff] shadow-md"
-                  : "border-gray-200 hover:bg-[#f9f9f9]"
-              }`}
+              className={`flex items-center justify-between rounded-[1.8rem] px-5 py-4 sm:px-6 sm:py-5 text-left transition-all duration-200 backdrop-blur-sm
+                ${
+                  selectedId === s.id
+                    ? "bg-[#F0FAFF] border border-[#84C5E0] shadow-[0_6px_20px_rgba(100,160,190,0.3)]"
+                    : "bg-white/95 border border-[#DCE9EF] shadow-[0_4px_12px_rgba(180,200,210,0.25)] hover:border-[#B9DBEA]"
+                }`}
             >
-              <div className="flex items-center gap-3 text-left">
-                <span className="w-10 h-10 flex items-center justify-center rounded-full bg-[#e6f4fa] text-2xl">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#E8F6FB] text-xl sm:text-2xl">
                   {s.emoji}
                 </span>
                 <div>
-                  <h3 className="text-base font-semibold text-[#2c4d63]">{s.title}</h3>
-                  <p className="text-xs text-gray-500">約 {s.time} で完了！</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{s.description}</p>
+                  <h3 className="text-[16px] sm:text-[18px] font-bold text-[#26485E] tracking-wide">
+                    {s.title}
+                  </h3>
+                  <p className="text-sm sm:text-base text-[#547386]">{s.time}</p>
+                  <p className="mt-0.5 text-[13px] sm:text-[14px] text-[#7A9AA9] leading-relaxed">
+                    {s.description}
+                  </p>
                 </div>
               </div>
-              {selectedId === s.id && <Check className="text-green-500 w-5 h-5 flex-shrink-0" strokeWidth={3} />}
+              {selectedId === s.id && (
+                <Check className="text-[#2c4d63] w-5 h-5 flex-shrink-0" strokeWidth={3} />
+              )}
             </motion.button>
           ))}
-        </motion.div>
+        </div>
 
-        {/* NOTE: 画面下部の操作ボタン */}
+        {/* 操作ボタン群 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-          className="sticky bottom-4 flex flex-col gap-2 bg-white pt-3"
+          transition={{ delay: 0.1, duration: 0.4 }}
+          className="flex flex-col gap-3 mt-8"
         >
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            whileHover={{ y: -2 }}
+            className="bg-[#FFD166] hover:bg-[#F4C14B] active:translate-y-[1px]
+            text-[#2C4D63] font-semibold py-2.5 sm:py-3 rounded-2xl 
+              shadow-[0_4px_10px_rgba(240,200,100,0.4)] transition-all duration-200"
             onClick={handleStart}
-            disabled={isPending}
-            className="bg-[#ffd166] hover:bg-[#f4c14b] text-[#2c4d63] font-semibold py-2 rounded-xl shadow-sm transition"
           >
-            {isPending ? "遷移中..." : "開始"}
-          </button>
-          <button
+            {isPending ? "送信中..." : "開始"}
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.96, backgroundColor: "#CFEAF5" }}
+            className="border border-[#B9DDEE]/70 text-[#3F6A80] font-medium py-2.5 sm:py-3 rounded-2xl 
+            bg-white/70
+              shadow-[inset_0_0_8px_rgba(160,200,220,0.15)] backdrop-blur-sm 
+              transition-all duration-200"
             onClick={handleSkip}
-            disabled={isPending}
-            className="border border-[#b3d9e8] text-[#4b7a93] font-medium py-2 rounded-xl transition
-          hover:bg-[#e3f4fa] active:bg-[#cdeaf6] active:text-[#2c4d63]"
           >
-            スキップ（{skipCount}/3）
-          </button>
+             スキップ
+          </motion.button>
         </motion.div>
 
-        {/* NOTE: フッター（今後リンク先を実装予定） */}
-        <div className="flex justify-around items-center mt-4 pt-3 border-t">
-          <div className="flex flex-col items-center text-[#6ba4c5] text-xs">
-            <span className="text-2xl">🏠</span> ホーム
-          </div>
-          <div className="flex flex-col items-center text-[#6ba4c5] text-xs">
-            <span className="text-2xl">📊</span> 記録
-          </div>
-          <div className="flex flex-col items-center text-[#6ba4c5] text-xs">
-            <span className="text-2xl">⚙️</span> 設定
-          </div>
-        </div>
-      </div>
+        <FooterNav />
+      </motion.div>
     </AuthLayout>
   );
 }
+
