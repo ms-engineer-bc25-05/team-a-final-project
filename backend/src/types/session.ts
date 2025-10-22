@@ -7,11 +7,18 @@
 
 // NOTE: ユーザーに提案された行動の情報
 export interface Suggestion  {
-    userId: string;
+    id: string;
     title: string;
     description?: string;
     category?: string;
 }
+
+// NOTE: 一時停止、再開の履歴を記録
+export interface PauseRecord {
+    pausedAt?: string;  // 一時停止した日時
+    resmedAt?: string;  // 再開した日時
+}
+
 
 // NOTE: ユーザーが実際に提案を選択して行動を開始した記録
 export interface SessionData  {
@@ -21,4 +28,5 @@ export interface SessionData  {
     status: "active" | "paused" | "completed";
     activityType?: string;
     suggestion?: Suggestion;
+    pauseHistory?: PauseRecord[];  // 停止／再開の履歴
 }

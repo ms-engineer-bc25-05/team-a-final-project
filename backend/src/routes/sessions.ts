@@ -2,62 +2,81 @@
  * NOTE:
  * /api/sessions ルートでは、ユーザーの行動セッション（SessionData）を
  * Firestore に記録・取得・更新する処理をします。
- * （Day6-1）では、まず「セッションの新規作成（POST）」のみ実装。
- * 
- * TODO: Day6-2 以降で以下を拡張予定：
- * - PATCH: 状態更新（pause / resume / complete）
- * - GET: ユーザー別のセッション履歴取得
+ * セッション状態の更新（停止・再開・完了）」を追加しました。
  */
 
 import express, { Request, Response } from "express";
 import admin from "firebase-admin";
 import { db } from "../config/firebase";
-import { SessionData } from "../types/session";
 
 const router = express.Router();
 
 /**
- * 新しい行動セッションを作成、Firestoreに記録します。
+ * セッションを「一時停止」に更新するAPI
+ * status を "paused" に変更し、
+ * pauseHistory 配列に { pausedAt: 現在時刻 } を追加します。
  */
-router.post("/", async( req: Request, res: Response):Promise<void> => {
-    // 受け取るデータを分解
-    const { userId, activityType, suggestion } = req.body;
+router.patch("/:id/pause", async( req: Request, res: Response):Promise<void> => {
+    const { id } = req.params;
+    const pausedAt = new Date().toISOString();
 
     try {
-        if (!userId) {
-            // FIXME: userId は将来的に Firebase Auth トークンから取得予定
-            res.status(400).json({ ok: false, message: "ユーザーIDは必須です"});
-            return;
+        await db.collection("sessions").doc(id).update({
+            status: "paused",
+            pauseHistory: admin.firestore.FieldValue.arrayUnion({ pausedAt }),
+        });
+
+        res.json({ ok: true, message: "セッションを一時停止しました。", pausedAt });
+
+    } catch (error) {
+        console.error("[PATCH /pause] Error:",error);
+        res.status(500).json({ ok: false, message:"セッションの一時停止に失敗しました" });
         }
-        // Firestoreへ登録するデータを整形
-        const sessionData: SessionData = {
-            userId,
-            startTime: new Date().toISOString(),
+});
+
+/**
+ * セッションを「再開」に更新するAPI
+ * status を "active" に戻し、
+ * pauseHistory 配列に { resumedAt: 現在時刻 } を追加します。
+ */
+router.patch("/:id/resume", async( req: Request, res: Response):Promise<void> => {
+    const { id } = req.params;
+    const resumedAt = new Date().toISOString();
+
+    try {
+        await db.collection("sessions").doc(id).update({
             status: "active",
-            activityType,
-            suggestion,
-        };
-
-        // Firestoreへ書き込み
-        const newDocRef = await db.collection("sessions").add({
-            ...sessionData,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            pauseHistory: admin.firestore.FieldValue.arrayUnion({ resumedAt }),
         });
 
-        res.status(201).json({
-            ok: true,
-            message: "セッションが正常に作成されました",
-            id: newDocRef.id  // Firestoreで自動発行されたドキュメントID
-        });
-    } catch (error:unknown) {
-        console.error("[POST /api/sessions] Error:",error);
+        res.json({ ok: true, message: "セッションを再開しました。", resumedAt });
 
-        if (error instanceof Error) {
-            res.status(500).json({ ok: false, message: error.message });
-        } else {
-            res.status(500).json({ ok: false, message:"不明なエラーが発生しました"});
+    } catch (error) {
+        console.error("[PATCH /resume] Error:",error);
+        res.status(500).json({ ok: false, message:"セッションの再開に失敗しました" });
         }
-    }
+});
+
+/**
+ * セッションを「完了」に更新するAPI
+ * 完了時は pauseHistory には触れず、status と endTime のみ更新。
+ */
+router.patch("/:id/complete", async( req: Request, res: Response):Promise<void> => {
+    const { id } = req.params;
+    const endTime = new Date().toISOString();
+
+    try {
+        await db.collection("sessions").doc(id).update({
+            status: "completed",
+            endTime,
+        });
+
+        res.json({ ok: true, message: "セッションを完了しました。", endTime });
+
+    } catch (error) {
+        console.error("[PATCH /complete] Error:",error);
+        res.status(500).json({ ok: false, message:"セッションの完了に失敗しました" });
+        }
 });
 
 export default router;
