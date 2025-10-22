@@ -22,7 +22,7 @@ export default function RestDonePage() {
         
         {/* 🌙 三日月（ふんわり光＋ゆっくりフェードイン） */}
         <motion.img
-          src="/images/half moon.png"
+          src="/images/half-moon.png"
           alt="moon"
           className="w-36 h-36 mb-2 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
