@@ -125,7 +125,7 @@ export default function SuggestionsPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex flex-col justify-between min-h-[100dvh] px-5 pt-12 pb-[calc(env(safe-area-inset-bottom)+80px)]"
+        className="flex flex-col justify-between min-h-dvh px-5 pt-12 pb-[calc(env(safe-area-inset-bottom)+80px)]"
       >
         {/* タイトル */}
         <h1 className="text-2xl font-bold text-[#2c4d63] mb-6 text-center tracking-wide">
@@ -133,74 +133,81 @@ export default function SuggestionsPage() {
         </h1>
 
         {/* 提案カード群 */}
+
         <div className="flex flex-col gap-4 sm:gap-5">
-          {suggestions.map((s) => (
-            <motion.button
-              key={s.id}
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setSelectedId(s.id)}
-              className={`flex items-center justify-between rounded-[1.8rem] px-5 py-4 sm:px-6 sm:py-5 text-left transition-all duration-200 backdrop-blur-sm
-                ${
-                  selectedId === s.id
-                    ? "bg-[#F0FAFF] border border-[#84C5E0] shadow-[0_6px_20px_rgba(100,160,190,0.3)]"
-                    : "bg-white/95 border border-[#DCE9EF] shadow-[0_4px_12px_rgba(180,200,210,0.25)] hover:border-[#B9DBEA]"
-                }`}
-            >
-              <div className="flex items-start gap-3 sm:gap-4">
-                <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#E8F6FB] text-xl sm:text-2xl">
-                  {s.emoji}
-                </span>
-                <div>
-                  <h3 className="text-[16px] sm:text-[18px] font-bold text-[#26485E] tracking-wide">
-                    {s.title}
-                  </h3>
-                  <p className="text-sm sm:text-base text-[#547386]">{s.time}</p>
-                  <p className="mt-0.5 text-[13px] sm:text-[14px] text-[#7A9AA9] leading-relaxed">
-                    {s.description}
-                  </p>
-                </div>
-              </div>
-              {selectedId === s.id && (
-                <Check className="text-[#2c4d63] w-5 h-5 flex-shrink-0" strokeWidth={3} />
-              )}
-            </motion.button>
-          ))}
+  {suggestions.map((s) => (
+    <motion.button
+      key={s.id}
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={() => setSelectedId(s.id)}
+      className={`flex items-center justify-between w-full max-w-[500px] mx-auto min-h-[120px] 
+        rounded-[1.8rem] px-6 py-4 sm:py-5 text-left transition-all duration-200 backdrop-blur-sm
+        ${
+          selectedId === s.id
+            ? "bg-[#F0FAFF] border border-[#84C5E0] shadow-[0_6px_20px_rgba(100,160,190,0.3)]"
+            : "bg-white/95 border border-[#DCE9EF] shadow-[0_4px_12px_rgba(180,200,210,0.25)] hover:border-[#B9DBEA]"
+        }`}
+    >
+      <div className="flex items-start gap-3 sm:gap-4">
+        <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#E8F6FB] text-xl sm:text-2xl">
+          {s.emoji}
+        </span>
+        <div>
+          <h3 className="text-[16px] sm:text-[18px] font-bold text-[#26485E] tracking-wide">
+            {s.title}
+          </h3>
+          <p className="text-sm sm:text-base text-[#547386]">{s.time}</p>
+          <p className="mt-0.5 text-[13px] sm:text-[14px] text-[#7A9AA9] leading-snug line-clamp-2">
+            {s.description}
+          </p>
         </div>
+      </div>
+      {selectedId === s.id && (
+        <Check className="text-[#2c4d63] w-5 h-5 shrink-0" strokeWidth={3} />
+      )}
+    </motion.button>
+  ))}
+</div>
+{/* 
 
-        {/* 操作ボタン群 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.4 }}
-          className="flex flex-col gap-3 mt-8"
-        >
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            whileHover={{ y: -2 }}
-            className="bg-[#FFD166] hover:bg-[#F4C14B] active:translate-y-[1px]
-            text-[#2C4D63] font-semibold py-2.5 sm:py-3 rounded-2xl 
-              shadow-[0_4px_10px_rgba(240,200,100,0.4)] transition-all duration-200"
-            onClick={handleStart}
-          >
-            {isPending ? "送信中..." : "開始"}
-          </motion.button>
+{/* 操作ボタン群 */}
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.1, duration: 0.4 }}
+  className="flex flex-col gap-3 mt-8"
+>
+  {/* 開始ボタン */}
+  <motion.button
+    whileTap={{ scale: 0.97 }}
+    className="relative w-full bg-linear-to-b from-[#FFE48C] to-[#FFD166]
+             hover:from-[#FFE070] hover:to-[#F4C14B]
+             text-[#2C4D63] font-semibold py-3 sm:py-3.5 rounded-2xl
+             shadow-[0_6px_18px_rgba(255,209,102,0.45)]
+             transition-all duration-300 transform hover:-translate-y-0.5"
+    onClick={handleStart}
+  >
+    {isPending ? "送信中..." : "開始"}
 
-          <motion.button
-            whileTap={{ scale: 0.96, backgroundColor: "#CFEAF5" }}
-            className="border border-[#B9DDEE]/70 text-[#3F6A80] font-medium py-2.5 sm:py-3 rounded-2xl 
-            bg-white/70
-              shadow-[inset_0_0_8px_rgba(160,200,220,0.15)] backdrop-blur-sm 
-              transition-all duration-200"
-            onClick={handleSkip}
-          >
-             スキップ
-          </motion.button>
-        </motion.div>
+    <span className="absolute inset-0 rounded-2xl bg-linear-to-t from-[#EFC94C]/20 to-transparent pointer-events-none" />
+
+  </motion.button>
+
+  {/* スキップボタン */}
+  <motion.button
+    whileTap={{ scale: 0.96 }}
+    className="bg-white border border-[#C8E1EB] text-[#3F6A80] font-medium py-2.5 sm:py-3 rounded-2xl 
+               shadow-[0_4px_12px_rgba(160,190,210,0.25)] hover:bg-[#F9FCFD] active:bg-[#EEF5F7]
+               transition-all duration-200"
+    onClick={handleSkip}
+  >
+     スキップ
+  </motion.button>
+</motion.div>
 
         <FooterNav />
       </motion.div>
     </AuthLayout>
   );
-}
-
+} 
