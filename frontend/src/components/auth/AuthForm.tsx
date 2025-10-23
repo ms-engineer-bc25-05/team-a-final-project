@@ -159,7 +159,7 @@ export default function AuthForm({ type }: AuthFormProps) {
         <AuthInput
           label="ユーザー名"
           type="text"
-          placeholder="例：山田太郎"
+          placeholder="ニックネームまたは名前"
           {...register("username")}
           error={errors.username?.message}
         />
@@ -197,7 +197,7 @@ export default function AuthForm({ type }: AuthFormProps) {
           boxShadow: "0px 2px 8px rgba(140,180,190,0.2)",
         }}
         type="submit"
-        className="w-full bg-gradient-to-r from-[#9EC9D4] to-[#A8D8E6]
+        className="w-full bg-linear-to-r from-[#9EC9D4] to-[#A8D8E6]
                    text-[#2C4D63] font-semibold py-3 rounded-xl
                    shadow-[0_4px_10px_rgba(150,190,200,0.25)]
                    hover:brightness-105 transition-all duration-300"
