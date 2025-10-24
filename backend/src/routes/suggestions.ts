@@ -1,9 +1,115 @@
 // backend/src/routes/suggestions.ts
-import { Router } from "express";
+import { Request, Response,Router} from "express";
+import OpenAI from "openai";
+import { db } from "../config/firebase";
 import { z } from "zod";
-import { SuggestionReqSchema, makeSuggestions } from "../services/suggestionService";
+import { makeSuggestions } from "../services/suggestionService";
+import { SuggestionRequestSchema } from "../schemas/suggestions";
+
 
 const router = Router();
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+/**
+ * POST /api/suggestions
+ * OpenAI を使って実際に提案を生成するルート。
+ */
+
+router.post("/", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const parsed = SuggestionRequestSchema.parse(req.body);
+    const { topic, count, userId } = parsed;
+
+    // ユーザーIDが存在しない場合エラー表示
+    if (!userId) {
+      res.status(400).json({ message: "Missing userId in request body"});
+        return;
+    }
+
+    // Firestoreからユーザー情報を取得
+    const userDoc = await db.collection("users").doc(userId).get();
+    const userData = userDoc.exists ? userDoc.data() : null;
+    
+    // 最新のmoodを取得
+    const moodSnap = await db
+      .collection("mood")
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .limit(1)
+      .get();
+    
+    const mood = !moodSnap.empty ? moodSnap.docs[0].data().status : "普通";
+
+    // 最新のsurveysを取得
+    const surveySnap = await db
+      .collection("surveys")
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .limit(1)
+      .get();
+
+    const surveyData = !surveySnap.empty ? surveySnap.docs[0].data() : {};
+
+    const userProfile = {
+      typeMorning: surveyData?.lifestyle || "未設定",
+      freeTime: `${surveyData?.freeTimeWeekday || "未設定"}／${surveyData?.freeTimeWeekend || "未設定"}`,
+      interests: surveyData?.interests || [],
+      personality: [surveyData?.personalityQ1, surveyData?.personalityQ2].filter(Boolean),
+    };
+
+    console.log("🎭 Mood fetched:", mood);
+    console.log("🧠 UserProfile fetched:", userProfile);
+  
+
+    // Open AI　プロンプト
+    const prompt = `
+    あなたはパーソナルスケジュールのコーチです。
+    以下のユーザー情報と現在の気分をもとに、${count}個の今日の行動提案を出してください。
+    【ユーザー情報】
+    - タイプ: ${userProfile?.typeMorning || "未設定"}
+    - 自由時間: ${userProfile?.freeTime || "未設定"}
+    - 興味分野: ${(userProfile?.interests || []).join("、") || "未設定"}
+    - 性格タイプ: ${(userProfile?.personality || []).join("、") || "未設定"}
+    - 今日の気分: ${mood || "普通"}
+    【条件】
+    - カテゴリ「${topic}」に関連する行動を中心に考えてください。
+    - 提案内容は上記の気分と性格に合ったペース・難易度で調整する
+    - 各提案には「タイトル（10文字以内）」を含めてください。
+    - 各提案は以下の形式で出力してください：
+    [
+      { "title": "提案タイトル", "reason": "短い説明", "time": "〇分", "difficulty": "低/中/高" }
+    ]`;
+
+    // OpenAI API　呼び出し
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5-nano",
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    let suggestions;
+    console.log("✅ AI response (raw):", content);
+
+    try {
+      suggestions = JSON.parse(content || "[]");
+    } catch {
+      suggestions = [{ title: content?.slice(0,50) || "提案生成に失敗しました" }];
+    }
+
+    res.json({
+      suggestions,
+      message: "success",
+    });
+  } catch (error) {
+    console.error("[POST /api/suggestions] OpenAI Error:", error);
+
+    const fallback = makeSuggestions({ topic: req.body.topic || "生活",count:3 });
+    res.json({
+      ...fallback,
+      message: "fallback: OpenAI error",
+    });
+  }
+});
 
 /** Figma の呼称に完全一致させる（表示ラベルを固定） */
 const TOPIC_LABELS = {
@@ -14,7 +120,7 @@ const TOPIC_LABELS = {
 } as const;
 
 /** ヘルスチェック */
-router.get("/ping", (_req, res) => {
+router.get("/ping", (_req: Request, res: Response): void => {
   res.json({ ok: true, at: new Date().toISOString() });
 });
 
@@ -23,7 +129,7 @@ router.get("/ping", (_req, res) => {
  * - topics: 画面で見せるカテゴリ一覧（見出し＋短い説明）
  * - example: リクエスト例 & サンプルレスポンス（中身は生活・リフレッシュ寄り）
  */
-router.get("/examples", (_req, res) => {
+router.get("/examples", (_req: Request, res: Response): void => {
   const topics = [
     { key: TOPIC_LABELS.exercise, desc: "体を軽く動かしてリフレッシュ" },
     { key: TOPIC_LABELS.study,    desc: "短時間のインプットや復習に" },
@@ -60,7 +166,7 @@ const QuerySchema = z.object({
     .optional(), // 日本語ラベル（例: "運動"）を想定。未指定なら「生活」。
 });
 
-router.get("/", (req, res) => {
+router.get("/", (req: Request, res: Response): Response => {
   const q = QuerySchema.safeParse(req.query);
   if (!q.success) {
     return res.status(400).json({ ok: false, message: "Invalid query", issues: q.error.issues });
@@ -87,23 +193,5 @@ router.get("/", (req, res) => {
   });
 });
 
-/**
- * POST /api/suggestions
- * 本来の提案生成（将来的にOpenAIなどと接続）。現状は makeSuggestions をそのまま返す。
- */
-router.post("/", (req, res) => {
-  try {
-    const parsed = SuggestionReqSchema.parse(req.body);
-    const payload = makeSuggestions(parsed);
-    res.json(payload);
-  } catch (e) {
-    const zerr = e as z.ZodError;
-    res.status(400).json({
-      ok: false,
-      message: "Invalid request body",
-      issues: zerr.issues ?? undefined,
-    });
-  }
-});
 
 export default router;

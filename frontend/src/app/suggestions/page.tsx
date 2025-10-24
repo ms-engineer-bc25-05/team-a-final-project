@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useTransition, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { auth } from "@/lib/firebase";
 import { motion } from "framer-motion";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { Check } from "lucide-react";
@@ -11,20 +13,31 @@ import FooterNav from "@/components/common/FooterNav";
 /** デフォルトのトピック（必要に応じて一括変更可） */
 const DEFAULT_TOPIC = "運動";
 
+/** Suggestion型定義 */
+type Suggestion = {
+  id: number;
+  title: string;
+  reason?: string;
+  time: string;
+  emoji: string;
+  description: string;
+};
+
 /**
  * NOTE:
  * 提案画面 (/suggestions)
+ * - APIから提案データを取得し、カードとして表示
  * - 提案を3回スキップすると「休む確認画面 (/rest-check)」へ遷移
- * - React19対応のため、状態更新と遷移を分離（useEffectで管理）
+ * - 「開始」で選択した提案に紐づくタイマー画面へ遷移
  */
 export default function SuggestionsPage() {
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [skipCount, setSkipCount] = useState(0);
   const [isPending, startTransition] = useTransition();
 
-  // NOTE: 現時点ではダミーデータ。将来的にAPI連携予定。
-  // → APIが使える場合は起動時に差し替える（最小変更）
+  // NOTE: 現時点ではダミーデータ。API成功時に上書き。
   const [suggestions, setSuggestions] = useState([
     {
       id: 1,
@@ -51,38 +64,67 @@ export default function SuggestionsPage() {
 
   // 追加: 起動時にAPIが使えるなら取得して上書き（使えない場合は既存ダミーのまま）
   useEffect(() => {
+    if (loading) {
+      console.log("⏳ 認証セッション復元中...");
+      return;
+    }
+    if (!user) {
+      console.warn("⚠️ ユーザーが未ログインです");
+      return;
+    }
     let cancelled = false;
+  
     (async () => {
       try {
         if (!isApiReady()) return;
-        // /api/suggestions を叩き、UI用の絵文字/時間を付加して既存の描画に合わせる
-        const res:
-          | { topic: string; count: number; suggestions: { id: string; title: string; reason?: string; score: number }[] }
-          | { id: string; title: string; reason?: string; score: number }[] = await postJson(
-          "/api/suggestions",
-          { topic: DEFAULT_TOPIC, count: 3 }
-        );
-        const list = Array.isArray(res) ? res : res.suggestions;
 
+        const user = auth.currentUser;
+        if(!user) {
+          console.warn("ユーザーが未ログインです");
+          return;
+        }
+      
+        console.log("🛰️ Fetching suggestions for:", user.uid);
+
+        const res = await postJson<{ suggestions: Suggestion[] }>(
+          "/api/suggestions", {
+            topic: DEFAULT_TOPIC, // 例: "運動"
+            count: 3,
+            userId: user.uid,
+            userProfile: {
+              typeMorning: "朝方",
+              freeTime: "3時間",
+              interests: ["学習", "リラックス"],
+              personality: ["マイペース型", "インドア型"],
+            },
+              mood: "やる気が低い",
+          },
+            { timeoutMs: 60000 }
+        );
+        console.log("✅ API response:", res);
+       
+        const list = res.suggestions;
         const emojis = ["🚶‍♂️", "📚", "✏️", "🧘", "🧹", "🍵"];
         const times = ["15分", "20分", "25分", "30分"];
-        const mapped = list.slice(0, 3).map((s, i) => ({
+
+        const mapped: Suggestion[] = list.slice(0, 3).map((s: Suggestion, i: number) => ({
           id: i + 1, // 既存の number id に合わせる
           emoji: emojis[i % emojis.length],
-          title: s.title,
-          time: times[i % times.length],
+          title: s.title || `提案 ${i + 1}`,
+          time: s.time || times[i % times.length],
           description: s.reason || "少しだけ手を付けてみましょう。",
         }));
 
         if (!cancelled) setSuggestions(mapped);
-      } catch {
+      } catch (err) {
+        console.error("❌ Failed to fetch suggestions:", err);
         // 取得失敗時は何もしない（既存ダミーのまま）
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loading, user]);
 
   /**
    * NOTE:
