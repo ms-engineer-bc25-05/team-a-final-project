@@ -6,14 +6,23 @@
  *  最後: http://localhost:4000
  */
 const BASE =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") || // ← 追加
   process.env.NEXT_PUBLIC_BACKEND_ORIGIN?.replace(/\/+$/, "") ||
   process.env.NEXT_PUBLIC_API_BASE?.replace(/\/+$/, "") ||
   "http://localhost:4000";
 
+
+/** 提案データ型 */
+type Suggestion = {
+  id: number;
+  title: string;
+  description?: string;
+};
+
+ 
 /** Preview などで API ベースURLが未設定/ダミーなら false */
 export function isApiReady(): boolean {
   if (!BASE) return false;
-  // ざっくりダミー判定（必要なら調整）
   return !BASE.includes("example.invalid");
 }
 
@@ -27,7 +36,7 @@ async function request<T>(
     return [] as unknown as T;
   }
 
-  const { timeoutMs = 20_000, ...rest } = init;
+  const { timeoutMs = 10_000, ...rest } = init; 
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -77,3 +86,9 @@ export type ShortResponse = {
 export function postShort(prompt: string, timeoutMs = 20_000) {
   return postJson<ShortResponse>("/api/openai/short", { prompt }, { timeoutMs });
 }
+
+/** 提案を取得するAPI */
+export async function fetchSuggestions() {
+  return getJson<Suggestion[]>("/api/suggestions");
+}
+

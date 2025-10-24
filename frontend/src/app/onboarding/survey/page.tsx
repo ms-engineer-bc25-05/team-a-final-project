@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getAuth } from "firebase/auth";
 import AuthLayout from "@/components/auth/AuthLayout";
 import FreeTimeSection from "@/components/survey/FreeTimeSection";
 
@@ -33,6 +34,14 @@ export default function SurveyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // NOTO: ログイン情報を取得する
+    const auth =getAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      alert("ログイン情報が取得できません。再度ログインしてください。");
+      return;
+    }
+
     if (!lifestyle || !freeTimeWeekday || !freeTimeWeekend) {
       alert("未入力の項目があります。");
       return;
@@ -43,14 +52,27 @@ export default function SurveyPage() {
       return;
     }
 
+    // NOTE:　タイプをマッピング
+    const personalityMap: Record<string, string> = {
+      "美味しい朝ごはんをゆっくり楽しむ": "マイペース型",
+      "とにかく動き出して外に出る": "アクティブ型",
+      "家でゴロゴロしながら好きなことをする": "インドア型",
+      "友達と出かけたり新しいことに挑戦する": "アウトドア型",
+    };
+
+    // 変換後の結果を取得
+    const type1 = personalityMap[personalityQ1] || "";
+    const type2 = personalityMap[personalityQ2] || "";
+
+    // NOTE: Firestoreに保存するデータ
     const surveyData = {
-      userId: "abc123",
+      userId: user.uid, // NOTO: Firebase Authの実際のUIDを保存
       lifestyle,
       freeTimeWeekday,
       freeTimeWeekend,
       interests,
-      personalityQ1,
-      personalityQ2,
+      personalityQ1: type1,
+      personalityQ2: type2,
     };
 
     try {
