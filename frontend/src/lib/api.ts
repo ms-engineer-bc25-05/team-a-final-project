@@ -14,9 +14,10 @@ const BASE =
 
 /** 提案データ型 */
 type Suggestion = {
-  id: number;
-  title: string;
-  description?: string;
+   id: string;
+   title: string;
+   reason?: string;
+   score?: number;
 };
 
  
