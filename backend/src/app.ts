@@ -7,7 +7,7 @@ import openaiRouter from "./routes/openai";
 import suggestionsRouter from "./routes/suggestions";
 import sessionsRouter from "./routes/sessions";
 import moodRouter from "./routes/mood";
-
+import heartbeatRouter from "./routes/heartbeat";
 
 const app = express();
 
@@ -16,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/sessions", sessionsRouter);
 app.use("/api/mood", moodRouter);
+app.use("/api/heartbeat", heartbeatRouter);
 
 // すべての JSON 応答を UTF-8 で返す
 app.use((_req: Request, res: Response, next: NextFunction): void => {
