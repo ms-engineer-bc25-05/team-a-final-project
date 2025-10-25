@@ -8,7 +8,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-/** Firestore内のユーザーXPを取得する */
+/** NOTE: ユーザーXPを取得（存在しない場合は0） */
 export async function fetchUserXP(userId: string): Promise<number> {
   const ref = doc(db, "users", userId);
   const snap = await getDoc(ref);
@@ -18,12 +18,11 @@ export async function fetchUserXP(userId: string): Promise<number> {
 }
 
 /**
- * FirestoreのXPを加算して保存する
+ * NOTE:
+ * ユーザーのXPを加算・更新する。
  * - 初回ユーザー対応
- * - 更新日時付き
- * - XP履歴を users/{uid}/xpLogs に記録
- * - 🔥 1日3タスク達成でボーナスXPを付与
- * - 🚫 XP=0 の場合は更新スキップ
+ * - dailyLogsにタスク達成数を記録（JST基準）
+ * - XP=0のときは更新をスキップ
  */
 export async function addUserXP(
   userId: string,
@@ -31,36 +30,26 @@ export async function addUserXP(
   reason = "task"
 ): Promise<number> {
   try {
-    // ✅ XP=0ならスキップ（15分未満タスクなど）
     if (earned <= 0) {
       console.log("⏸️ XP=0 のため Firestore 更新をスキップしました。");
-      return await fetchUserXP(userId); // 現在XPを返す
+      return await fetchUserXP(userId); 
     }
 
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
     const currentXP = userSnap.exists() ? userSnap.data().xp ?? 0 : 0;
 
-    // ✅ 今日の日付キー (例: "2025-10-25")
-    const today = new Date().toISOString().split("T")[0];
+    // NOTE: JST基準でdailyLogsキーを生成
+    const now = new Date();
+    const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    const today = jst.toISOString().split("T")[0];
     const dailyRef = doc(db, "users", userId, "dailyLogs", today);
     const dailySnap = await getDoc(dailyRef);
     const dailyCount = dailySnap.exists() ? dailySnap.data().count ?? 0 : 0;
 
-    // ✅ タスク達成数更新
     const newCount = dailyCount + 1;
-    let bonus = 0;
+    const newXP = currentXP + earned;
 
-    // ✅ 1日3タスク達成ボーナス（例: +10XP）
-    if (newCount === 3) {
-      bonus = 10;
-      console.log(`🎯 1日3タスク達成ボーナス: +${bonus} XP`);
-    }
-
-    const totalGain = earned + bonus;
-    const newXP = currentXP + totalGain;
-
-    // ✅ users/{uid} に合計XP更新
     await setDoc(
       userRef,
       {
@@ -70,7 +59,6 @@ export async function addUserXP(
       { merge: true }
     );
 
-    // ✅ 1日のタスクカウント更新
     await setDoc(
       dailyRef,
       {
@@ -80,18 +68,15 @@ export async function addUserXP(
       { merge: true }
     );
 
-    // ✅ XP履歴を追加
+    // NOTE: XP履歴ログを追加
     const logRef = collection(db, "users", userId, "xpLogs");
     await addDoc(logRef, {
       earned,
-      bonus,
       reason,
       createdAt: serverTimestamp(),
     });
 
-    console.log(
-      `✨ ${earned} (+${bonus}) XP logged for ${userId} (${reason}), dailyCount: ${newCount}`
-    );
+    console.log(`✨ ${earned} XP logged for ${userId} (${reason}), dailyCount: ${newCount}`);
 
     return newXP;
   } catch (error) {
