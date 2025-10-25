@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { Laugh, Smile, Frown } from "lucide-react";
 import { motion } from "framer-motion";
+import { auth } from "@/lib/firebase";
 
 /**
  * NOTE:
  * トップページ（/mood）
  * - AuthLayoutのカードを非表示（showCard=false）
+ *  - ログイン中ユーザーのuidを利用して mood を保存
  */
 export default function MoodPage() {
   const router = useRouter();
@@ -26,12 +28,20 @@ export default function MoodPage() {
 
   const handleSubmit = async () => {
     if (!selectedMood) return alert("気分を選択してください！");
+
+    const user = auth.currentUser; // Firebase認証ユーザーを取得
+    if (!user) {
+      alert("ログインしてください！");
+      router.push("/login");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/mood`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "abc123", mood: selectedMood }),
+        body: JSON.stringify({ userId: user.uid, mood: selectedMood }),
       });
       if (!res.ok) throw new Error("送信に失敗しました");
       router.push("/suggestions");

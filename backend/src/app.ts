@@ -6,6 +6,7 @@ import listEndpoints from "express-list-endpoints";
 import openaiRouter from "./routes/openai";
 import suggestionsRouter from "./routes/suggestions";
 import sessionsRouter from "./routes/sessions";
+import moodRouter from "./routes/mood";
 import heartbeatRouter from "./routes/heartbeat";
 
 const app = express();
@@ -14,6 +15,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api/sessions", sessionsRouter);
+app.use("/api/mood", moodRouter);
 app.use("/api/heartbeat", heartbeatRouter);
 
 // すべての JSON 応答を UTF-8 で返す
@@ -78,5 +80,15 @@ app.use(
     });
   }
 );
+
+// --- Root ---
+app.get("/", (_req: Request, res: Response) => {
+  res.json({ ok: true, message: "API server is running" });
+});
+
+// ✅ ここに移動！（エラーハンドラーの外）
+app.get("/api/health", (_req: Request, res: Response) => {
+  res.status(200).json({ status: "ok", env: process.env.NODE_ENV });
+});
 
 export default app;
