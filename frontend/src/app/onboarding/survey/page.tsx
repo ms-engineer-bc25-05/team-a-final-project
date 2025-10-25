@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAuth } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import AuthLayout from "@/components/auth/AuthLayout";
 import FreeTimeSection from "@/components/survey/FreeTimeSection";
 
@@ -34,8 +34,7 @@ export default function SurveyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // NOTO: ログイン情報を取得する
-    const auth =getAuth();
+    // NOTO: // Firebase Auth からログインユーザー取得
     const user = auth.currentUser;
     if (!user) {
       alert("ログイン情報が取得できません。再度ログインしてください。");
@@ -99,7 +98,7 @@ export default function SurveyPage() {
 
   return (
     <AuthLayout title="アンケート" showCard={false}>
-      <div className="min-h-screen bg-gradient-to-b from-[#FAFCFD] to-[#F2F8FA] px-6 py-10 overflow-y-auto">
+      <div className="min-h-screen bg-linear-to-b from-[#FAFCFD] to-[#F2F8FA] px-6 py-10 overflow-y-auto">
         <form
           onSubmit={handleSubmit}
           className="space-y-6 w-full max-w-md mx-auto text-[#2C4D63]"

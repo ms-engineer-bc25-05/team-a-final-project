@@ -8,6 +8,7 @@ import suggestionsRouter from "./routes/suggestions";
 import sessionsRouter from "./routes/sessions";
 import moodRouter from "./routes/mood";
 import heartbeatRouter from "./routes/heartbeat";
+import surveysRouter from "./routes/surveys";
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/api/sessions", sessionsRouter);
 app.use("/api/mood", moodRouter);
 app.use("/api/heartbeat", heartbeatRouter);
+app.use("/api/surveys", surveysRouter); 
 
 // すべての JSON 応答を UTF-8 で返す
 app.use((_req: Request, res: Response, next: NextFunction): void => {
