@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 /**
@@ -13,10 +13,14 @@ import { useEffect, useState } from "react";
 export default function TimerPage() {
   const router = useRouter();
   const params = useSearchParams();
+  
 
   // NOTE: クエリからタスク情報を取得（例: /timer?title=読書&minutes=25）
   const taskTitle = params.get("title") || "このタスク";
   const taskMinutes = Number(params.get("minutes")) || 25;
+
+  const { id } = useParams();
+  const taskId = id;
 
   // NOTE: 残り時間を秒単位で保持
   const totalSeconds = taskMinutes * 60;
@@ -46,16 +50,19 @@ export default function TimerPage() {
   const handleComplete = () => {
     setIsRunning(false);
     alert("おつかれさまです！");
-    router.push("/tasks/id/complete");
+    if (taskId) {
+      router.push(`/tasks/${taskId}/complete`);
+    }
   };
-
 
   return (
     <main className="min-h-screen bg-linear-to-b from-[#FAFCFD] to-[#F7FBFC] flex flex-col items-center justify-start pt-16 pb-24 text-center">
       {/* --- Header --- */}
       <header className="mb-14 w-full max-w-[500px] px-6">
-        <h1 className="text-2xl font-bold text-[#2C4D63] mb-5 tracking-wide">
-          ⏱️「{taskTitle}」の時間です
+        <h1 className="flex items-center justify-center gap-2 text-2xl font-bold text-[#2C4D63] text-center tracking-wide 
+                       max-w-[90%] truncate mx-auto whitespace-nowrap overflow-hidden text-ellipsis mb-5"
+        >
+          ⏱️&nbsp; {taskTitle}
         </h1>
         <p className="text-sm text-[#6B94A3]">
           無理せず、ゆっくりいきましょう。
@@ -119,4 +126,5 @@ export default function TimerPage() {
       </div>
     </main>
   );
-}
+  };
+

@@ -8,7 +8,10 @@ import { motion } from "framer-motion";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { Check } from "lucide-react";
 import { isApiReady, postJson } from "@/lib/api";
+import { db } from "@/lib/firebase";
+import { collection, addDoc } from "firebase/firestore";
 import FooterNav from "@/components/common/FooterNav";
+import { Sparkles, Lightbulb, Leaf } from "lucide-react";
 
 /** デフォルトのトピック（必要に応じて一括変更可） */
 const DEFAULT_TOPIC = "運動";
@@ -19,7 +22,6 @@ type Suggestion = {
   title: string;
   reason?: string;
   time: string;
-  emoji: string;
   description: string;
 };
 
@@ -36,33 +38,9 @@ export default function SuggestionsPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [skipCount, setSkipCount] = useState(0);
   const [isPending, startTransition] = useTransition();
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
-  // NOTE: 現時点ではダミーデータ。API成功時に上書き。
-  const [suggestions, setSuggestions] = useState([
-    {
-      id: 1,
-      emoji: "🚶‍♂️",
-      title: "散歩",
-      time: "20分",
-      description: "気分転換に軽く体を動かしてみましょう。",
-    },
-    {
-      id: 2,
-      emoji: "📚",
-      title: "読書",
-      time: "30分",
-      description: "好きなジャンルの本を少しだけ読む時間に。",
-    },
-    {
-      id: 3,
-      emoji: "✏️",
-      title: "英語学習",
-      time: "25分",
-      description: "短めのリスニングや英単語チェックでOKです。",
-    },
-  ]);
-
-  // 追加: 起動時にAPIが使えるなら取得して上書き（使えない場合は既存ダミーのまま）
+  // 起動時にAPIが使えるなら取得して上書き（使えない場合は既存ダミーのまま）
   useEffect(() => {
     if (loading) {
       console.log("⏳ 認証セッション復元中...");
@@ -73,21 +51,22 @@ export default function SuggestionsPage() {
       return;
     }
     let cancelled = false;
-  
+
     (async () => {
       try {
         if (!isApiReady()) return;
 
         const user = auth.currentUser;
-        if(!user) {
+        if (!user) {
           console.warn("ユーザーが未ログインです");
           return;
         }
-      
+
         console.log("🛰️ Fetching suggestions for:", user.uid);
 
         const res = await postJson<{ suggestions: Suggestion[] }>(
-          "/api/suggestions", {
+          "/api/suggestions",
+          {
             topic: DEFAULT_TOPIC, // 例: "運動"
             count: 3,
             userId: user.uid,
@@ -97,19 +76,17 @@ export default function SuggestionsPage() {
               interests: ["学習", "リラックス"],
               personality: ["マイペース型", "インドア型"],
             },
-              mood: "やる気が低い",
+            mood: "やる気が低い",
           },
-            { timeoutMs: 60000 }
+          { timeoutMs: 60000 }
         );
         console.log("✅ API response:", res);
-       
+
         const list = res.suggestions;
-        const emojis = ["🚶‍♂️", "📚", "✏️", "🧘", "🧹", "🍵"];
         const times = ["15分", "20分", "25分", "30分"];
 
-        const mapped: Suggestion[] = list.slice(0, 3).map((s: Suggestion, i: number) => ({
-          id: i + 1, // 既存の number id に合わせる
-          emoji: emojis[i % emojis.length],
+        const mapped: Suggestion[] = list.slice(0, 3).map((s, i) => ({
+          id: i + 1,
           title: s.title || `提案 ${i + 1}`,
           time: s.time || times[i % times.length],
           description: s.reason || "少しだけ手を付けてみましょう。",
@@ -118,9 +95,9 @@ export default function SuggestionsPage() {
         if (!cancelled) setSuggestions(mapped);
       } catch (err) {
         console.error("❌ Failed to fetch suggestions:", err);
-        // 取得失敗時は何もしない（既存ダミーのまま）
       }
     })();
+
     return () => {
       cancelled = true;
     };
@@ -134,7 +111,7 @@ export default function SuggestionsPage() {
   useEffect(() => {
     if (skipCount >= 3) {
       startTransition(() => router.push("/rest-check"));
-      setSkipCount(0); // 次回のスキップカウントをリセット
+      setSkipCount(0);
     }
   }, [skipCount, router, startTransition]);
 
@@ -144,12 +121,39 @@ export default function SuggestionsPage() {
    * - 提案が未選択の場合は警告を表示
    * - 選択済みなら該当タスクのタイマー画面へ遷移
    */
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!selectedId) {
       alert("提案を選択してください！");
       return;
     }
-    startTransition(() => router.push(`/tasks/${selectedId}/timer`));
+
+    const selected = suggestions.find((s) => s.id === selectedId);
+    if (!selected) return;
+
+    try {
+      // ✅ Firestoreに新しいタスクを登録
+      const docRef = await addDoc(collection(db, "tasks"), {
+        title: selected.title,
+        minutes: parseInt(selected.time),
+        description: selected.description,
+        status: "active",
+        createdAt: new Date(),
+        userId: user?.uid || "guest",
+      });
+
+      console.log("🆕 Task created with ID:", docRef.id);
+
+      startTransition(() => {
+        router.push(
+          `/tasks/${docRef.id}/timer?id=${docRef.id}&title=${encodeURIComponent(
+            selected.title
+          )}&minutes=${parseInt(selected.time)}`
+        );
+      });
+    } catch (error) {
+      console.error("❌ Failed to create task:", error);
+      alert("タスク作成に失敗しました。もう一度お試しください。");
+    }
   };
 
   /**
@@ -161,95 +165,128 @@ export default function SuggestionsPage() {
     setSkipCount((prev) => prev + 1);
   };
 
+  const renderIcon = (index: number) => {
+    const size = 36;
+    switch (index) {
+      case 0:
+        return <Sparkles size={size} className="text-[#4A90E2]" />;
+      case 1:
+        return <Lightbulb size={size} className="text-[#7B61FF]" />;
+      case 2:
+        return <Leaf size={size} className="text-[#34C759]" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <AuthLayout showHeader={false} showCard={false}>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex flex-col justify-between min-h-dvh px-5 pt-12 pb-[calc(env(safe-area-inset-bottom)+80px)]"
+        className="relative flex flex-col justify-between min-h-dvh px-5 pt-12 pb-[calc(env(safe-area-inset-bottom)+80px)] text-[#2c4d63]"
       >
         {/* タイトル */}
-        <h1 className="text-2xl font-bold text-[#2c4d63] mb-6 text-center tracking-wide">
+        <h1 className="text-2xl font-bold text-[#2c4d63] text-center tracking-wide">
           あなたへの提案
         </h1>
 
-        {/* 提案カード群 */}
+        {suggestions.length === 0 ? (
+          // 🔄 ローディング表示（提案を取得中…）
+          <div className="flex flex-1 flex-col items-center justify-start text-[#648091] mt-60">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
+            >
+              <Sparkles className="w-7 h-7 mb-3 text-[#84C5E0]" />
+            </motion.div>
+            <p className="text-sm">提案を生成中です…</p>
+          </div>
+        ) : (
+          <>
+            {/* 提案カード群 */}
+            <div className="flex flex-col gap-6 mb-6 sm:gap-5">
+              {suggestions.map((s, i) => (
+                <motion.button
+                  key={s.id}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setSelectedId(s.id)}
+                  className={`flex items-center justify-between w-full max-w-[500px] mx-auto min-h-[120px] 
+                   rounded-[1.8rem] px-6 py-4 sm:py-5 text-left transition-all duration-200 backdrop-blur-sm
+                    ${
+                      selectedId === s.id
+                        ? "bg-[#F0FAFF] border border-[#84C5E0] shadow-[0_6px_20px_rgba(100,160,190,0.3)]"
+                        : "bg-white/95 border border-[#DCE9EF] shadow-[0_4px_12px_rgba(180,200,210,0.25)] hover:border-[#B9DBEA]"
+                    }`}
+                >
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <span
+                      className="shrink-0 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center
+                    rounded-full bg-[#E8F6FB] text-xl sm:text-2xl"
+                    >
+                      {renderIcon(i)}
+                    </span>
 
-        <div className="flex flex-col gap-4 sm:gap-5">
-  {suggestions.map((s) => (
-    <motion.button
-      key={s.id}
-      whileHover={{ scale: 1.02, y: -2 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={() => setSelectedId(s.id)}
-      className={`flex items-center justify-between w-full max-w-[500px] mx-auto min-h-[120px] 
-        rounded-[1.8rem] px-6 py-4 sm:py-5 text-left transition-all duration-200 backdrop-blur-sm
-        ${
-          selectedId === s.id
-            ? "bg-[#F0FAFF] border border-[#84C5E0] shadow-[0_6px_20px_rgba(100,160,190,0.3)]"
-            : "bg-white/95 border border-[#DCE9EF] shadow-[0_4px_12px_rgba(180,200,210,0.25)] hover:border-[#B9DBEA]"
-        }`}
-    >
-      <div className="flex items-start gap-3 sm:gap-4">
-        <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#E8F6FB] text-xl sm:text-2xl">
-          {s.emoji}
-        </span>
-        <div>
-          <h3 className="text-[16px] sm:text-[18px] font-bold text-[#26485E] tracking-wide">
-            {s.title}
-          </h3>
-          <p className="text-sm sm:text-base text-[#547386]">{s.time}</p>
-          <p className="mt-0.5 text-[13px] sm:text-[14px] text-[#7A9AA9] leading-snug line-clamp-3">
-            {s.description}
-          </p>
-        </div>
-      </div>
-      {selectedId === s.id && (
-        <Check className="text-[#2c4d63] w-5 h-5 shrink-0" strokeWidth={3} />
-      )}
-    </motion.button>
-  ))}
-</div>
-{/* 
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[16px] sm:text-[18px] font-bold text-[#26485E] tracking-wide">
+                        {s.title}
+                      </h3>
+                      <p className="text-sm sm:text-base text-[#547386]">
+                        {s.time}
+                      </p>
+                      <p className="mt-0.5 text-[13px] sm:text-[14px] text-[#7A9AA9] leading-snug line-clamp-3">
+                        {s.description}
+                      </p>
+                    </div>
+                  </div>
+                  {selectedId === s.id && (
+                    <Check
+                      className="text-[#2c4d63] w-5 h-5 shrink-0"
+                      strokeWidth={3}
+                    />
+                  )}
+                </motion.button>
+              ))}
+            </div>
 
-{/* 操作ボタン群 */}
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: 0.1, duration: 0.4 }}
-  className="flex flex-col gap-3 mt-8"
->
-  {/* 開始ボタン */}
-  <motion.button
-    whileTap={{ scale: 0.97 }}
-    className="relative w-full bg-linear-to-b from-[#FFE48C] to-[#FFD166]
+            {/* 操作ボタン群 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.4 }}
+              className="flex flex-col gap-3 mt-8"
+            >
+              {/* 開始ボタン */}
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                className="relative w-full bg-linear-to-b from-[#FFE48C] to-[#FFD166]
              hover:from-[#FFE070] hover:to-[#F4C14B]
              text-[#2C4D63] font-semibold py-3 sm:py-3.5 rounded-2xl
              shadow-[0_6px_18px_rgba(255,209,102,0.45)]
              transition-all duration-300 transform hover:-translate-y-0.5"
-    onClick={handleStart}
-  >
-    {isPending ? "送信中..." : "開始"}
+                onClick={handleStart}
+              >
+                {isPending ? "送信中..." : "開始"}
+                <span className="absolute inset-0 rounded-2xl bg-linear-to-t from-[#EFC94C]/20 to-transparent pointer-events-none" />
+              </motion.button>
 
-    <span className="absolute inset-0 rounded-2xl bg-linear-to-t from-[#EFC94C]/20 to-transparent pointer-events-none" />
-
-  </motion.button>
-
-  {/* スキップボタン */}
-  <motion.button
-    whileTap={{ scale: 0.96 }}
-    className="bg-white border border-[#C8E1EB] text-[#3F6A80] font-medium py-2.5 sm:py-3 rounded-2xl 
+              {/* スキップボタン */}
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                className="bg-white border border-[#C8E1EB] text-[#3F6A80] font-medium py-2.5 sm:py-3 rounded-2xl 
                shadow-[0_4px_12px_rgba(160,190,210,0.25)] hover:bg-[#F9FCFD] active:bg-[#EEF5F7]
                transition-all duration-200"
-    onClick={handleSkip}
-  >
-     スキップ
-  </motion.button>
-</motion.div>
-
+                onClick={handleSkip}
+              >
+                スキップ
+              </motion.button>
+            </motion.div>
+          </>
+        )}
         <FooterNav />
       </motion.div>
     </AuthLayout>
   );
-} 
+}
