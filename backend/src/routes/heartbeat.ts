@@ -103,4 +103,100 @@ router.get("/:userId", async (req: Request, res: Response): Promise<void> => {
     }
 });
 
+/** セッションを一時停止 */
+
+router.patch("/:sessionId/pause", async (req: Request, res: Response):Promise<void> => {
+    try {
+        console.log("🩵 [DEBUG] req.params:", req.params);
+        const { sessionId } = req.params;
+
+        // デバックを追加
+        if (!sessionId) {
+            console.error("セッションIDが未定義です");
+            res.status(400).json({
+                ok:false,
+                message: "セッションIDが指定されていません",
+            });
+            return;
+        }
+
+        // sessionId に該当する最新ドキュメントを取得
+        const snapshot = await db
+           .collection("heartbeats")
+           .where("sessionId", "==", sessionId)
+           .orderBy("timestamp","desc")
+           .limit(1)
+           .get();
+
+         if (snapshot.empty) {
+            res.status(404).json({
+                ok: false,
+                message: "指定されたセッションが見つかりません。",
+            });
+            return;
+         } 
+         
+         const docRef = snapshot.docs[0].ref;
+
+         await docRef.update({
+            status: "paused",
+            updatedAt: new Date(),
+         });
+
+         res.status(200).json({
+            ok: true,
+            message: "セッションを一時停止しました。",
+            sessionId,
+         });
+    } catch (error) {
+        console.error("[PATCH /api/heartbeat/:sessionId/pause] エラー詳細:", error);
+        res.status(500).json({
+            ok: false,
+            message: `セッションの一時停止中にエラーが発生しました: ${String(
+                (error as Error).message
+            )}`,
+        });
+    }
+});
+
+/** セッションを再開 */
+router.patch("/:sessionId/resume", async (req:Request, res: Response): Promise<void> => {
+    try {
+        const { sessionId } =req.params;
+
+        const snapshot = await db
+           .collection("heartbeats")
+           .where("sessionId", "==", sessionId)
+           .orderBy("timestamp","desc")
+           .limit(1)
+           .get();
+
+        if (snapshot.empty) {
+            res.status(404).json({
+                ok:false,
+                message: "指定されたセッションが見つかりません。",
+            });
+            return;
+        }
+        const docRef =snapshot.docs[0].ref;
+        
+        await docRef.update({
+            status: "active",
+            updatedAt: new Date(),
+        });
+
+        res.status(200).json({
+            ok:true,
+            message: "セッションを再開しました。",
+            sessionId,
+        });
+    } catch (error) {
+        console.error("[PATCH /api/heartbeat/:sessionId/resume] エラー:", error);
+        res.status(500).json({
+            ok:false,
+            message: "セッションの再開中にエラーが発生しました。",
+        });
+    }
+});
+
 export default router;
