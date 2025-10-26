@@ -4,7 +4,8 @@ import OpenAI from "openai";
 import { db } from "../config/firebase";
 import { z } from "zod";
 import { makeSuggestions } from "../services/suggestionService";
-import { SuggestionRequestSchema } from "../schemas/suggestions";
+import { SuggestionRequestSchema, SuggestionRequest } from "../schemas/suggestions";
+import { buildSuggestionPrompt } from "../utils/openaiPrompt";
 
 
 const router = Router();
@@ -17,8 +18,8 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const parsed = SuggestionRequestSchema.parse(req.body);
-    const { topic, count, userId } = parsed;
+    const parsed: SuggestionRequest = SuggestionRequestSchema.parse(req.body);
+    const { topic, subInterests = [], count, userId, mood: parsedMood, userProfile } = parsed;
 
     // ユーザーIDが存在しない場合エラー表示
     if (!userId) {
@@ -37,8 +38,23 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       .orderBy("createdAt", "desc")
       .limit(1)
       .get();
-    
-    const mood = !moodSnap.empty ? moodSnap.docs[0].data().status : "普通";
+
+    let dbMood: string | null = null;
+    if (!moodSnap.empty) {
+      const doc = moodSnap.docs[0].data();
+      dbMood = doc.status || doc.mood || null;
+    }
+
+    const normalizeMood = (m: string | null): "high" | "normal" | "low" => {
+      if (!m) return "normal";
+      if (m.includes("高") || m === "high") return "high";
+      if (m.includes("低") || m === "low") return "low";
+      return "normal";
+    };
+
+    const mood = normalizeMood(parsedMood ?? dbMood);
+
+    console.log("🎭 Mood fetched:", mood);
 
     // 最新のsurveysを取得
     const surveySnap = await db
@@ -50,35 +66,34 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
 
     const surveyData = !surveySnap.empty ? surveySnap.docs[0].data() : {};
 
-    const userProfile = {
+    const userProfileFinal = {
       typeMorning: surveyData?.lifestyle || "未設定",
       freeTime: `${surveyData?.freeTimeWeekday || "未設定"}／${surveyData?.freeTimeWeekend || "未設定"}`,
       interests: surveyData?.interests || [],
       personality: [surveyData?.personalityQ1, surveyData?.personalityQ2].filter(Boolean),
     };
 
-    console.log("🎭 Mood fetched:", mood);
-    console.log("🧠 UserProfile fetched:", userProfile);
   
+    console.log("🧠 UserProfile fetched:", userProfileFinal);
+    console.log("📘 Mood fetched:", dbMood);
 
-    // Open AI　プロンプト
-    const prompt = `
-    あなたはパーソナルスケジュールのコーチです。
-    以下のユーザー情報と現在の気分をもとに、${count}個の今日の行動提案を出してください。
-    【ユーザー情報】
-    - タイプ: ${userProfile?.typeMorning || "未設定"}
-    - 自由時間: ${userProfile?.freeTime || "未設定"}
-    - 興味分野: ${(userProfile?.interests || []).join("、") || "未設定"}
-    - 性格タイプ: ${(userProfile?.personality || []).join("、") || "未設定"}
-    - 今日の気分: ${mood || "普通"}
-    【条件】
-    - カテゴリ「${topic}」に関連する行動を中心に考えてください。
-    - 提案内容は上記の気分と性格に合ったペース・難易度で調整する
-    - 各提案には「タイトル（10文字以内）」を含めてください。
-    - 各提案は以下の形式で出力してください：
-    [
-      { "title": "提案タイトル", "reason": "短い説明", "time": "〇分", "difficulty": "低/中/高" }
-    ]`;
+    const topics = userProfileFinal.interests ?? [];
+
+    // Open AI　プロンプトを/utile/openaiPrompt.tsから呼び出す
+    const prompt =  buildSuggestionPrompt({
+      userProfile: userProfileFinal,
+      mood,
+      topics,
+      subInterests,
+      count: 3,
+      })
+  
+      console.log("🧠 userProfile.interests:", userProfileFinal.interests);
+      console.log("📘 topics:", topics);
+      console.log("➡️ 最終的にAIに渡す topics:", topics ? [topics] : userProfileFinal?.interests || []);
+
+
+      console.log("🧾 Prompt content:\n", prompt);
 
     // OpenAI API　呼び出し
     const completion = await openai.chat.completions.create({
@@ -110,6 +125,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     });
   }
 });
+
 
 /** Figma の呼称に完全一致させる（表示ラベルを固定） */
 const TOPIC_LABELS = {

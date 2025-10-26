@@ -200,7 +200,7 @@ export default function SuggestionsPage() {
             {s.title}
           </h3>
           <p className="text-sm sm:text-base text-[#547386]">{s.time}</p>
-          <p className="mt-0.5 text-[13px] sm:text-[14px] text-[#7A9AA9] leading-snug line-clamp-2">
+          <p className="mt-0.5 text-[13px] sm:text-[14px] text-[#7A9AA9] leading-snug line-clamp-3">
             {s.description}
           </p>
         </div>
