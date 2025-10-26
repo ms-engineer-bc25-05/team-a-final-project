@@ -16,9 +16,9 @@ export default function SettingsPage() {
   const router = useRouter();
 
   // アカウント情報
-  const [name, setName] = useState("taro");
-  const [email, setEmail] = useState("mail@example.com");
-  const [password, setPassword] = useState("12345678");
+  const [name, setName] = useState("himuro");
+  const [email, setEmail] = useState("himuro.123@gmail.com");
+  const [password, setPassword] = useState("123456");
 
   // アンケート項目
   const [lifestyle, setLifestyle] = useState("朝型");
@@ -40,7 +40,7 @@ export default function SettingsPage() {
 
   return (
     <AuthLayout title="設定" showCard={false}>
-      <div className="min-h-screen bg-gradient-to-b from-[#FAFCFD] to-[#F2F8FA] px-6 py-10 overflow-y-auto">
+      <div className="min-h-screen bg-linear-to-b from-[#FAFCFD] to-[#F2F8FA] px-6 py-10 overflow-y-auto">
         <form className="space-y-8 w-full max-w-md mx-auto text-[#2C4D63]">
           {/* アカウント情報 */}
           <section>
