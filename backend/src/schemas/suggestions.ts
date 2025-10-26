@@ -12,6 +12,7 @@ export const SuggestionRequestSchema = z.object({
     personality: z.array(z.string()).optional(), // 診断結果
   }).optional(),
   mood: z.string().optional(), // 当日の気分
+  subInterests: z.array(z.string()).optional(),  // 細かい趣味や分野の指定
 });
 
 export type SuggestionRequest = z.infer<typeof SuggestionRequestSchema>;
