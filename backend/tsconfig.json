@@ -28,7 +28,7 @@
   },
 
   /* コンパイル対象 */
-  "include": ["src"],
+  "include": ["src", "scripts"],
 
   /* 除外対象 */
   "exclude": ["node_modules"]
