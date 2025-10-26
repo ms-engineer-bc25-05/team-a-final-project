@@ -8,6 +8,7 @@ import suggestionsRouter from "./routes/suggestions";
 import sessionsRouter from "./routes/sessions";
 import moodRouter from "./routes/mood";
 import heartbeatRouter from "./routes/heartbeat";
+import recordsRouter from "./routes/records";
 import surveysRouter from "./routes/surveys";
 
 const app = express();
@@ -15,10 +16,6 @@ const app = express();
 // --- Middlewares ---
 app.use(cors());
 app.use(express.json());
-app.use("/api/sessions", sessionsRouter);
-app.use("/api/mood", moodRouter);
-app.use("/api/heartbeat", heartbeatRouter);
-app.use("/api/surveys", surveysRouter); 
 
 // すべての JSON 応答を UTF-8 で返す
 app.use((_req: Request, res: Response, next: NextFunction): void => {
@@ -46,6 +43,11 @@ app.get("/", (_req: Request, res: Response) => {
 // --- Routers ---
 app.use("/api/openai", openaiRouter);
 app.use("/api/suggestions", suggestionsRouter);
+app.use("/api/records", recordsRouter);      // 追加
+app.use("/api/sessions", sessionsRouter);    // NOTE: MiddlewaresからRoutersにまとめ直しました
+app.use("/api/mood", moodRouter);            // NOTE: MiddlewaresからRoutersにまとめ直しました
+app.use("/api/heartbeat", heartbeatRouter);  // NOTE: MiddlewaresからRoutersにまとめ直しました
+app.use("/api/surveys", surveysRouter); 
 
 // --- ルート一覧（express-list-endpoints 使用）---
 app.get("/__routes", (_req: Request, res: Response): void => {
