@@ -1,4 +1,4 @@
-export const useHeroLevel = (xp: number) => {
+export const getHeroLevel = (xp: number) => {
   const levels = [
     { level: 1, title: "時の旅びと", min: 0, max: 19, image: "/images/hero_lv1.png" },
     { level: 2, title: "小さな挑戦者", min: 20, max: 59, image: "/images/hero_lv2.png" },

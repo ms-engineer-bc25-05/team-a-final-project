@@ -31,10 +31,10 @@ export default function AuthLayout({
 
   return (
     <div
-      className={`flex justify-center items-center min-h-[100dvh] px-safe py-safe
+      className={`flex justify-center items-center min-h-dvh px-safe py-safe
         ${whiteBg
           ? "bg-white" // 完全白
-          : "bg-gradient-to-b from-[#FDFDFC] via-[#EAF5F8] to-[#D9EDF3]"}`}
+          : "bg-linear-to-b from-[#FDFDFC] via-[#EAF5F8] to-[#D9EDF3]"}`}
     >
        {/* メイン */}
       <motion.main
@@ -43,7 +43,7 @@ export default function AuthLayout({
         transition={{ duration: 0.9, ease: "easeOut" }}
         className={`w-full max-w-[430px] min-h-[720px] flex flex-col items-center
           ${showCard
-            ? "bg-white/90 backdrop-blur-md border border-[#E5EEF0] sm:rounded-[2rem] shadow-[0_8px_24px_rgba(170,200,210,0.25)]"
+            ? "bg-white/90 backdrop-blur-md border border-[#E5EEF0] sm:rounded-4xl shadow-[0_8px_24px_rgba(170,200,210,0.25)]"
             : "bg-transparent"} 
           overflow-hidden`}
         

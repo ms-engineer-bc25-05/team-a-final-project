@@ -1,12 +1,12 @@
 // frontend/src/lib/api.ts
 
 /** APIベースURL
- *  優先: NEXT_PUBLIC_BACKEND_ORIGIN
- *  互換: NEXT_PUBLIC_API_BASE
- *  最後: http://localhost:4000
+ * 優先: NEXT_PUBLIC_API_URL
+ * 互換: NEXT_PUBLIC_BACKEND_ORIGIN, NEXT_PUBLIC_API_BASE
+ * 最後: http://localhost:4000
  */
 const BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") || // ← 追加
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") || // ← 優先
   process.env.NEXT_PUBLIC_BACKEND_ORIGIN?.replace(/\/+$/, "") ||
   process.env.NEXT_PUBLIC_API_BASE?.replace(/\/+$/, "") ||
   "http://localhost:4000";

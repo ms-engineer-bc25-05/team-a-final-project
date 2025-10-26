@@ -22,7 +22,9 @@ interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
           type={type}
           placeholder={placeholder}
           {...props}
-          className="w-full px-4 py-2 border border-[#c8dbe4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#a5cbe1]"
+          className="w-full px-4 py-2 border border-[#c8dbe4] rounded-xl
+                   text-[#2C4D63] placeholder:text-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-[#a5cbe1]"
         />
         {/* エラーメッセージ（赤文字） */}
         {error && <p className="text-red-500 text-sm mt-1">{error}</p>}

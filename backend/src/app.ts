@@ -9,6 +9,7 @@ import sessionsRouter from "./routes/sessions";
 import moodRouter from "./routes/mood";
 import heartbeatRouter from "./routes/heartbeat";
 import recordsRouter from "./routes/records";
+import surveysRouter from "./routes/surveys";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/api/records", recordsRouter);      // 追加
 app.use("/api/sessions", sessionsRouter);    // NOTE: MiddlewaresからRoutersにまとめ直しました
 app.use("/api/mood", moodRouter);            // NOTE: MiddlewaresからRoutersにまとめ直しました
 app.use("/api/heartbeat", heartbeatRouter);  // NOTE: MiddlewaresからRoutersにまとめ直しました
+app.use("/api/surveys", surveysRouter); 
 
 // --- ルート一覧（express-list-endpoints 使用）---
 app.get("/__routes", (_req: Request, res: Response): void => {
