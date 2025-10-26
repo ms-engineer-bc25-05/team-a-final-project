@@ -1,51 +1,118 @@
 import { Router, Request, Response } from "express";
 import { db } from "../config/firebase";
-import { RecordSchema, RecordData } from "../schemas/records";
-import { ZodError } from "zod";
+import { RecordData } from "../schemas/records";
+// import { ZodError } from "zod";  // 今は使用しないためコメントアウト
+import dayjs from "dayjs";
 
 const router = Router();
 
-/** POST /api/records 
- * 今日の日付に基づいて「達成済みタスク」を一覧で返す
+/** GET /api/records/daily
+ * 今日の行動を返す
  */
-router.post("/", async (req: Request, res: Response): Promise<void> => {
+router.get("/daily", async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log("[API] POST /api/records");
-
-    // ✅ date をサーバー側で自動補完
-    const today = new Date().toISOString().split("T")[0]; // "2025-10-26"
-    const parsed: RecordData = RecordSchema.parse({
-      ...req.body,
-      date: req.body.date || today,
-    });
-
-    await db.collection("records").add({
-      ...parsed,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    res.status(201).json({
-      ok: true,
-      message: "行動記録を保存しました。",
-    });
-  } catch (error) {
-    console.error("[POST /api/records] エラー:", error);
-
-    // ✅ ZodError を安全に判定
-    if (error instanceof ZodError) {
-      res.status(400).json({
-        ok: false,
-        message: "リクエストの形式が正しくありません",
-        issues: error.issues,
-      });
+    const userId = req.query.userId as string;
+    if (!userId) {
+      res.status(400).json({ ok: false, message: "userId が必要です。"});
       return;
     }
+    const today = dayjs().format("YYYY-MM-DD");
 
-    res.status(500).json({
-      ok: false,
-      message: "サーバーエラーが発生しました。",
+    const snapshot = await db
+      .collection("records")
+      .where("userId", "==", userId)
+      .where("date", "==", today)
+      .get();
+    
+    const records = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  
+    res.status(200).json({
+      ok: true,
+      date: today,
+      count: records.length,
+      records,
     });
+  } catch (error) {
+    console.error("[GET /api/records/daily] エラー:", error);
+    res.status(500).json({ ok:false, message:"サーバーエラーが発生しました。"});
+    
+  }
+});
+/** GET /api/records/weekly
+ * 直近7日間の行動記録を返す
+ */
+router.get("/weekly", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.query.userId as string;
+    if (!userId) {
+      res.status(400).json({ ok: false, message: "userId が必要です。"});
+      return;
+    }
+    const end = dayjs();
+    const start = end.subtract(6, "day");
+    const startDate = start.format("YYYY-MM-DD");
+    const endDate = end.format("YYYY-MM-DD");
+
+    const snapshot = await db
+      .collection("records")
+      .where("userId", "==", userId)
+      .where("date", ">=", startDate)
+      .where("date", "<=", endDate)
+      .orderBy("date", "desc")
+      .get();
+    
+    const records = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  
+    res.status(200).json({
+      ok: true,
+      period: { start: startDate, end: endDate },
+      count: records.length,
+      records,
+    });
+  } catch (error) {
+    console.error("[GET /api/records/weekly] エラー:", error);
+    res.status(500).json({ ok:false, message:"サーバーエラーが発生しました。"});
+    
+  }
+});
+/** POST /api/records/monthly
+ * 今月の行動記録を返す
+ */
+router.get("/monthly", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.query.userId as string;
+    if (!userId) {
+      res.status(400).json({ ok: false, message: "userId が必要です。"});
+      return;
+    }
+    const now = dayjs();
+    const prefix = now.format("YYYY-MM");
+
+    const snapshot = await db
+      .collection("records")
+      .where("userId", "==", userId)
+      .orderBy("date", "desc")
+      .get();
+    
+    const records = snapshot.docs
+      .map((doc) => ({ id: doc.id, ...(doc.data()) as RecordData }))
+      .filter((rec) => rec.date?.startsWith(prefix));
+  
+    res.status(200).json({
+      ok: true,
+      count: records.length,
+      records,
+    });
+  } catch (error) {
+    console.error("[GET /api/records/monthly] エラー:", error);
+    res.status(500).json({ ok:false, message:"サーバーエラーが発生しました。"});
+    
   }
 });
 
