@@ -1,6 +1,13 @@
 // backend/src/utils/openaiPrompt.ts
+export type UserProfile = {
+  typeMorning?: string;       // 朝型 or 夜型
+  freeTime?: string;          // 自由時間（例: "20:00〜22:00／13:00〜17:00"）
+  interests?: string[];       // 興味分野（例: ["趣味", "映画鑑賞", "学習"]）
+  personality?: string[];     // 性格タイプ（例: ["マイペース型", "インドア型"]）
+};
+
 type BuildPromptParams = {
-    userProfile: any;
+    userProfile: UserProfile;
     mood: "high" | "normal" | "low";
     topics: string[];
     subInterests?: string[];
