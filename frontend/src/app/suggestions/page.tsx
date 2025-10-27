@@ -39,6 +39,8 @@ export default function SuggestionsPage() {
   const [skipCount, setSkipCount] = useState(0);
   const [isPending, startTransition] = useTransition();
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
 
   // 起動時にAPIが使えるなら取得して上書き（使えない場合は既存ダミーのまま）
   useEffect(() => {
@@ -115,6 +117,59 @@ export default function SuggestionsPage() {
     }
   }, [skipCount, router, startTransition]);
 
+  const fetchSuggestions = async () => {
+    setIsLoading(true); // ローディング開始
+    try {
+      if (!isApiReady()) {
+        console.warn("⚠️ APIが準備できていません");
+        setIsLoading(false);
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (!user) {
+        console.warn("ユーザーが未ログインです");
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("🛰️ Fetching suggestions for:", user.uid);
+
+      const res = await postJson<{ suggestions: Suggestion[] }>(
+        "/api/suggestions",
+        {
+          topic: DEFAULT_TOPIC,
+          count: 3,
+          userId: user.uid,
+          userProfile: {
+            typeMorning: "朝方",
+            freeTime: "3時間",
+            interests: ["学習", "リラックス"],
+            personality: ["マイペース型", "インドア型"],
+          },
+          mood: "やる気が低い",
+        },
+        { timeoutMs: 60000 }
+      );
+
+      const list = res.suggestions;
+      const times = ["15分", "20分", "25分", "30分"];
+
+      const mapped: Suggestion[] = list.slice(0, 3).map((s, i) => ({
+        id: i + 1,
+        title: s.title || `提案 ${i + 1}`,
+        time: s.time || times[i % times.length],
+        description: s.reason || "少しだけ手を付けてみましょう。",
+      }));
+
+      setSuggestions(mapped);
+    } catch (err) {
+      console.error("❌ Failed to fetch suggestions:", err);
+    } finally {
+      setIsLoading(false); // ✅ ローディング終了（必ず実行される）
+    }
+  };
+
   /**
    * NOTE:
    * 「開始」ボタン押下時
@@ -141,7 +196,7 @@ export default function SuggestionsPage() {
         userId: user?.uid || "guest",
       });
 
-      console.log("🆕 Task created with ID:", docRef.id);
+      console.log(" Task created with ID:", docRef.id);
 
       startTransition(() => {
         router.push(
@@ -161,9 +216,20 @@ export default function SuggestionsPage() {
    * 「スキップ」ボタン押下時
    * - カウントアップのみ実行（3回目はuseEffect側で遷移処理）
    */
-  const handleSkip = () => {
+  const handleSkip = async () => {
     setSkipCount((prev) => prev + 1);
-  };
+
+    // TODO: スキップ時にローディング表示が確実に出るよう、UI更新タイミングを改善予定
+    // ここでローディング開始を先に出す、即座にUI切り替え
+    setIsLoading(true);
+    setSuggestions([]);
+
+    // NOTE: 現在はsetTimeout(50ms)で暫定対応中。将来的にアニメーション導入検討。
+    // 少し待ってから新しい提案を再取得
+    setTimeout(async () => {  
+     await fetchSuggestions();
+    },200);
+   };
 
   const renderIcon = (index: number) => {
     const size = 36;
@@ -192,7 +258,7 @@ export default function SuggestionsPage() {
           あなたへの提案
         </h1>
 
-        {suggestions.length === 0 ? (
+        {isLoading || suggestions.length === 0 ? (
           // 🔄 ローディング表示（提案を取得中…）
           <div className="flex flex-1 flex-col items-center justify-start text-[#648091] mt-60">
             <motion.div
