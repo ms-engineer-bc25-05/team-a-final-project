@@ -50,7 +50,7 @@ export default function TaskCompletePage({ params }: { params: Promise<{ id: str
       }
 
       const task = taskSnap.data();
-      const taskDuration = task.durationMin ?? 0;
+      const taskDuration = task.minutes ?? task.durationMin ?? 0;
       setTaskTitle(task.title ?? "Untitled Task");
 
       console.log("⏱️ タスク時間:", taskDuration);
@@ -82,7 +82,7 @@ export default function TaskCompletePage({ params }: { params: Promise<{ id: str
   if (xp === null) {
   return (
     <AuthLayout showHeader={false} showCard={false}>
-       <div className="flex min-h-screen flex-col items-center justify-between pb-24 pt-20 text-[#2c4d63] overflow-hidden relative bg-transparent">
+       <div className="flex flex-1 flex-col items-center justify-start text-[#648091] mt-60">
         <p className="text-[#547386] text-sm animate-pulse">がんばりを記録中...</p>
        </div>
        </AuthLayout>
@@ -91,12 +91,12 @@ export default function TaskCompletePage({ params }: { params: Promise<{ id: str
 
   return (
     <AuthLayout showHeader={false} showCard={false}>
-      <div className="flex min-h-screen flex-col items-center justify-between pb-24 pt-20 text-[#2c4d63] overflow-hidden relative bg-transparent">  
-    
-       {/* ふんわり光の演出 */}
-       <div className="absolute inset-0 -z-10 bg-linear-to-b from-[#EAF6FB] via-[#F8FBFC] to-[#FFFFFF]" />
-       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_20%,rgba(185,221,238,0.35),transparent_70%)]" />
+      <div className="relative flex min-h-screen flex-col items-center justify-between pb-24 pt-20 text-[#2c4d63]">
 
+       {/* ふんわり光の演出 */}
+      <div className="fixed inset-0 -z-10 bg-linear-to-b from-[#EAF6FB] via-[#F8FBFC] to-[#FFFFFF]" />
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_30%_20%,rgba(185,221,238,0.35),transparent_70%)]" />
+      
         {/* 見出し */}
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
