@@ -1,6 +1,6 @@
 "use client";
 
-import React, { JSX, useEffect, useState } from "react"; // ← useEffect, useState 追加
+import React, { JSX, useEffect, useState } from "react"; 
 import useSWR from "swr";
 import { useAuth } from "@/hooks/useAuth";
 import AuthLayout from "@/components/auth/AuthLayout";
@@ -8,9 +8,9 @@ import Image from "next/image";
 import FooterNav from "@/components/common/FooterNav";
 import { useRouter, usePathname } from "next/navigation";
 import { Gem, Sparkles } from "lucide-react";
-import { getHeroLevel } from "@/lib/logic/xpRules"; // ★ 追加
-import { doc, getDoc } from "firebase/firestore"; // ★ 追加
-import { db } from "@/lib/firebase"; // ★ 追加
+import { getHeroLevel } from "@/lib/logic/xpRules"; 
+import { doc, getDoc } from "firebase/firestore"; 
+import { db } from "@/lib/firebase"; 
 
 console.log("🔧 NEXT_PUBLIC_API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
 
@@ -59,7 +59,7 @@ export default function RecordsDailyPage(): JSX.Element {
   const pathname = usePathname();
   const { user, loading } = useAuth();
 
-  // 🔹 ここ追加：Firestoreから取得したヒーロー情報を保存するstate
+  // Firestoreから取得したヒーロー情報を保存するstate
   const [hero, setHero] = useState<HeroInfo>({
     level: 1,
     title: "時の旅びと",
@@ -68,7 +68,7 @@ export default function RecordsDailyPage(): JSX.Element {
     progress: 0,
   });
 
-  // 🔹 FirestoreからXP取得してHero更新
+  // FirestoreからXP取得してHero更新
   useEffect(() => {
     if (!user?.uid) return;
 
