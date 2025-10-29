@@ -1,6 +1,6 @@
 "use client";
 
-import React, { JSX } from "react";
+import React, { JSX, useEffect, useState } from "react"; // ← useEffect, useState 追加
 import useSWR from "swr";
 import { useAuth } from "@/hooks/useAuth";
 import AuthLayout from "@/components/auth/AuthLayout";
@@ -8,6 +8,9 @@ import Image from "next/image";
 import FooterNav from "@/components/common/FooterNav";
 import { useRouter, usePathname } from "next/navigation";
 import { Gem, Sparkles } from "lucide-react";
+import { getHeroLevel } from "@/lib/logic/xpRules"; // ★ 追加
+import { doc, getDoc } from "firebase/firestore"; // ★ 追加
+import { db } from "@/lib/firebase"; // ★ 追加
 
 console.log("🔧 NEXT_PUBLIC_API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
 
@@ -40,6 +43,7 @@ type HeroInfo = {
   title: string;
   xp: number;
   image: string;
+  progress: number;
 };
 
 const fetcher = async (url: string): Promise<RecordsResponse> => {
@@ -55,6 +59,37 @@ export default function RecordsDailyPage(): JSX.Element {
   const pathname = usePathname();
   const { user, loading } = useAuth();
 
+  // 🔹 ここ追加：Firestoreから取得したヒーロー情報を保存するstate
+  const [hero, setHero] = useState<HeroInfo>({
+    level: 1,
+    title: "時の旅びと",
+    xp: 0,
+    image: "/images/hero_lv1.png",
+    progress: 0,
+  });
+
+  // 🔹 FirestoreからXP取得してHero更新
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const fetchHero = async () => {
+      try {
+        const ref = doc(db, "users", user.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const userData = snap.data();
+          const xp = userData.xp ?? 0;
+          const heroInfo = getHeroLevel(xp);
+          setHero({ ...heroInfo, xp });
+        }
+      } catch (error) {
+        console.error("🔥 Error fetching hero:", error);
+      }
+    };
+
+    fetchHero();
+  }, [user]);
+
   console.log("🔍 Current user.uid:", user?.uid);
   console.log("📘 SWR URL:", user ? `/api/records/daily?userId=${user.uid}` : "null");
 
@@ -66,13 +101,6 @@ export default function RecordsDailyPage(): JSX.Element {
     ? "monthly" 
     : "daily";
 
-  const hero: HeroInfo = {
-    level: 5,
-    title: "剣士",
-    xp: 320,
-    image: "/images/hero_lv5.png",
-  };
-
   const shouldFetch = !loading && !!user;
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -82,13 +110,6 @@ export default function RecordsDailyPage(): JSX.Element {
     : null;
 
   const { data, error, isLoading } = useSWR<RecordsResponse>(apiUrl, fetcher);
-
-  console.log("🧩 loading:", loading);
-  console.log("🧩 user:", user);
-  console.log("🧩 apiUrl:", apiUrl);
-  // const apiUrl = user ? `/api/records/daily?userId=${user.uid}` : null;
-  // const { data, error, isLoading } = useSWR<RecordsResponse>(apiUrl, fetcher);
-
 
   if (loading) {
     return (
@@ -101,7 +122,6 @@ export default function RecordsDailyPage(): JSX.Element {
   }
 
   const records = data?.records ?? [];
-  console.log("📘 Records fetched:", records);
 
   return (
     <AuthLayout showHeader={false} showCard={false}>
@@ -141,7 +161,7 @@ export default function RecordsDailyPage(): JSX.Element {
           <div className="w-full max-w-[500px] flex flex-col items-center rounded-[2.2rem] border border-[#E5EEF0] bg-white/97 p-8 shadow-[0_12px_36px_rgba(170,200,210,0.35)] backdrop-blur">
             <Image
               src={hero.image}
-              alt="hero"
+              alt={hero.title}
               width={125}
               height={125}
               className="object-contain drop-shadow-sm"
@@ -152,28 +172,22 @@ export default function RecordsDailyPage(): JSX.Element {
               Lv.{hero.level} {hero.title}
             </p>
             <p className="text-sm text-[#547386]">累計 {hero.xp} XP</p>
+            <div className="w-48 h-2 bg-[#E5EEF0] rounded-full mt-3">
+              <div
+                className="h-2 bg-[#6BB7D6] rounded-full transition-all duration-500"
+                style={{ width: `${hero.progress}%` }}
+              />
+            </div>
           </div>
         </section>
 
-        {/* Summary Section */}
+        {/* Summary Section（以下はそのまま） */}
         <section className="w-full max-w-[500px] px-6">
-
-        {/* NOTE:
-             エラー時（API未接続 or 通信失敗）
-             - 開発中はモックデータ利用を案内
-             - 本番API実装後はコメントアウト部分に切り替え予定
-        */}
-
           {error && (
             <p className="mb-6 mx-auto max-w-[480px] rounded-4xl border border-[#D5EEF6] bg-[#F4FBFD] p-4 text-sm text-[#2c4d63] text-center">
               モックデータを表示中です
             </p>
           )}
-          
-        {/* FIXME: API実装後にこちらへ切り替え
-             ※ JSX内には直接コメントアウトのHTMLを置けないため、ここに残しておく
-             <p className="...">データの取得に失敗しました。再読み込みしてください。</p>
-        */}
 
           <div className="mb-7 text-center">
             {isLoading ? (
@@ -196,15 +210,15 @@ export default function RecordsDailyPage(): JSX.Element {
             <div className="mx-auto flex max-w-[480px] flex-col gap-5">
               {records.map((r, idx) => (
                 <div
-                key={idx}
+                  key={idx}
                   className="flex items-center justify-between rounded-[2.2rem] border border-[#E5EEF0] bg-white/97 px-7 py-6 shadow-sm backdrop-blur"
                 >
                   <p className="flex items-center gap-2 text-[16px] text-[#2c4d63]">
-                  <Gem size={18} strokeWidth={2.4} className="text-[#6BB7D6] shrink-0 translate-y-px" /> 
-                  {r.title}
+                    <Gem size={18} strokeWidth={2.4} className="text-[#6BB7D6] shrink-0 translate-y-px" /> 
+                    {r.title}
                   </p>
                   <p className="text-sm font-semibold text-[#547386]">
-                  {r.duration ?? 0}分
+                    {r.duration ?? 0}分
                   </p>
                 </div>
               ))}
