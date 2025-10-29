@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { use, useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { addUserXP, fetchUserXP } from "@/lib/firestore/xp";
 import { getXPByDuration } from "@/lib/logic/xpRules";
 import { getHeroLevel } from "@/hooks/getHeroLevel";
@@ -41,16 +41,19 @@ export default function TaskCompletePage({ params }: { params: Promise<{ id: str
     if (!userId) return;
 
     (async () => {
-      const taskRef = doc(db, "tasks", id);
-      const taskSnap = await getDoc(taskRef);
+      const q = query(collection(db, "heartbeats"), where("sessionId", "==", id));
+      const querySnap = await getDocs(q);
 
-      if (!taskSnap.exists()) {
+      if (querySnap.empty) {
         console.error("❌ Task not found:", id);
         return;
       }
 
-      const task = taskSnap.data();
-      const taskDuration = task.minutes ?? task.durationMin ?? 0;
+      const task = querySnap.docs[0].data();
+      const taskDuration = task.elapsedTime ?? task.minutes ?? task.durationMin ?? 0;
+
+      console.log("🧩 Task snapshot data:", task);
+
       setTaskTitle(task.title ?? "Untitled Task");
 
       console.log("⏱️ タスク時間:", taskDuration);

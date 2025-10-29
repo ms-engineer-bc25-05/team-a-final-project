@@ -8,8 +8,6 @@ import { motion } from "framer-motion";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { Check } from "lucide-react";
 import { isApiReady, postJson } from "@/lib/api";
-import { db } from "@/lib/firebase";
-import { collection, addDoc } from "firebase/firestore";
 import FooterNav from "@/components/common/FooterNav";
 import { Sparkles, Lightbulb, Leaf } from "lucide-react";
 
@@ -152,10 +150,10 @@ export default function SuggestionsPage() {
         { timeoutMs: 60000 }
       );
 
-      const list = res.suggestions;
+      const list: Suggestion[] = res.suggestions;
       const times = ["15分", "20分", "25分", "30分"];
 
-      const mapped: Suggestion[] = list.slice(0, 3).map((s, i) => ({
+      const mapped: Suggestion[] = list.slice(0, 3).map((s: Suggestion, i: number) => ({
         id: i + 1,
         title: s.title || `提案 ${i + 1}`,
         time: s.time || times[i % times.length],
@@ -185,29 +183,40 @@ export default function SuggestionsPage() {
     const selected = suggestions.find((s) => s.id === selectedId);
     if (!selected) return;
 
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      alert("ログインが必要です。");
+      return;
+    }
+
     try {
-      // ✅ Firestoreに新しいタスクを登録
-      const docRef = await addDoc(collection(db, "tasks"), {
-        title: selected.title,
-        minutes: parseInt(selected.time),
-        description: selected.description,
-        status: "active",
-        createdAt: new Date(),
-        userId: user?.uid || "guest",
+      console.log("🚀 Sending heartbeat start request...");
+
+      // バックエンドにセッションを登録（Firestore経由でheartbeatsに記録）
+      const res = await postJson<{ ok: boolean; sessionId: string }>(
+        "/api/heartbeat",
+       {
+        userId: currentUser.uid, 
+        elapsedTime: parseInt(selected.time.replace(/[^\d]/g, "")),
+        status: "active", 
+        timestamp: new Date().toISOString(), 
+        title: selected.title, 
+        category: "運動",
+        description: selected.description, 
       });
 
-      console.log(" Task created with ID:", docRef.id);
+      console.log(" Heartbeat created:", res.sessionId);
 
       startTransition(() => {
         router.push(
-          `/tasks/${docRef.id}/timer?id=${docRef.id}&title=${encodeURIComponent(
+          `/tasks/${res.sessionId}/timer?title=${encodeURIComponent(
             selected.title
           )}&minutes=${parseInt(selected.time)}`
         );
       });
     } catch (error) {
       console.error("❌ Failed to create task:", error);
-      alert("タスク作成に失敗しました。もう一度お試しください。");
+      alert("セッション作成に失敗しました。もう一度お試しください。");
     }
   };
 
@@ -273,7 +282,7 @@ export default function SuggestionsPage() {
           <>
             {/* 提案カード群 */}
             <div className="flex flex-col gap-6 mb-6 sm:gap-5">
-              {suggestions.map((s, i) => (
+              {suggestions.map((s: Suggestion, i: number) => (
                 <motion.button
                   key={s.id}
                   whileHover={{ scale: 1.02, y: -2 }}
