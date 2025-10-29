@@ -6,6 +6,7 @@ import { z } from "zod";
 import { makeSuggestions } from "../services/suggestionService";
 import { SuggestionRequestSchema, SuggestionRequest } from "../schemas/suggestions";
 import { buildSuggestionPrompt } from "../utils/openaiPrompt";
+import dayjs from "dayjs";
 
 
 const router = Router();
@@ -31,20 +32,23 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     const userDoc = await db.collection("users").doc(userId).get();
     const userData = userDoc.exists ? userDoc.data() : null;
     
+
+    let dbMood: string | null = null;
+
     // 最新のmoodを取得
     const moodSnap = await db
-      .collection("mood")
+      .collection("moods")          // moodからmoodsに修正
       .where("userId", "==", userId)
       .orderBy("createdAt", "desc")
       .limit(1)
       .get();
-
-    let dbMood: string | null = null;
+    
     if (!moodSnap.empty) {
-      const doc = moodSnap.docs[0].data();
-      dbMood = doc.status || doc.mood || null;
+      const moodDoc = moodSnap.docs[0].data();
+      dbMood = moodDoc.status || moodDoc.mood || null;
     }
 
+    // mood 正規化（Firestore優先）
     const normalizeMood = (m: string | null): "high" | "normal" | "low" => {
       if (!m) return "normal";
       if (m.includes("高") || m === "high") return "high";
@@ -52,9 +56,10 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       return "normal";
     };
 
-    const mood = normalizeMood(parsedMood ?? dbMood);
+    const mood = normalizeMood ((dbMood ?? parsedMood) ?? null);
 
-    console.log("🎭 Mood fetched:", mood);
+    // 現在の日付から曜日を取得し、土日であれば true を返す（0=日曜, 6=土曜）
+    const isWeekend = [0, 6].includes(dayjs().day()); 
 
     // 最新のsurveysを取得
     const surveySnap = await db
@@ -66,16 +71,19 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
 
     const surveyData = !surveySnap.empty ? surveySnap.docs[0].data() : {};
 
+    // 曜日によってfreeTimeを自動選択
+    const freeTime = isWeekend
+    ? surveyData?.freeTimeWeekend || "未設定"
+    : surveyData?.freeTimeWeekday || "未設定";
+
+    // ユーザープロフィール確定
     const userProfileFinal = {
       typeMorning: surveyData?.lifestyle || "未設定",
-      freeTime: `${surveyData?.freeTimeWeekday || "未設定"}／${surveyData?.freeTimeWeekend || "未設定"}`,
+      freeTime,
+      // freeTime: `${surveyData?.freeTimeWeekday || "未設定"}／${surveyData?.freeTimeWeekend || "未設定"}`,
       interests: surveyData?.interests || [],
       personality: [surveyData?.personalityQ1, surveyData?.personalityQ2].filter(Boolean),
     };
-
-  
-    console.log("🧠 UserProfile fetched:", userProfileFinal);
-    console.log("📘 Mood fetched:", dbMood);
 
     const topics = userProfileFinal.interests ?? [];
 
@@ -88,9 +96,10 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       count: 3,
       })
   
-      console.log("🧠 userProfile.interests:", userProfileFinal.interests);
-      console.log("📘 topics:", topics);
-      console.log("➡️ 最終的にAIに渡す topics:", topics ? [topics] : userProfileFinal?.interests || []);
+      // console.log("🧠 Final mood (after normalize):", mood);
+      // console.log("🧠 userProfile.interests:", userProfileFinal.interests);
+      // console.log("📘 topics:", topics);
+      // console.log("➡️ 最終的にAIに渡す topics:", topics ? [topics] : userProfileFinal?.interests || []);
 
 
       console.log("🧾 Prompt content:\n", prompt);

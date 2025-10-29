@@ -302,7 +302,7 @@ export default function SuggestionsPage() {
                       <p className="text-sm sm:text-base text-[#547386]">
                         {s.time}
                       </p>
-                      <p className="mt-0.5 text-[13px] sm:text-[14px] text-[#7A9AA9] leading-snug line-clamp-3">
+                      <p className="mt-0.5 text-[13px] sm:text-[14px] text-[#7A9AA9] leading-snug line-clamp-4">
                         {s.description}
                       </p>
                     </div>
