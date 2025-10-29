@@ -42,22 +42,43 @@ async function request<T>(
   const id = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(`${BASE}${path}`, {
-      cache: "no-store",
-      headers: { "Content-Type": "application/json", ...(rest.headers || {}) },
-      signal: controller.signal,
-      ...rest,
-    });
+//     const res = await fetch(`${BASE}${path}`, {
+//       cache: "no-store",
+//       headers: { "Content-Type": "application/json", ...(rest.headers || {}) },
+//       signal: controller.signal,
+//       ...rest,
+//     });
 
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(`${rest.method ?? "GET"} ${path} failed: ${res.status} ${text}`.trim());
-    }
-    // JSONのみを想定
-    return (await res.json()) as T;
-  } finally {
-    clearTimeout(id);
-  }
+//     if (!res.ok) {
+//       const text = await res.text().catch(() => "");
+//       throw new Error(`${rest.method ?? "GET"} ${path} failed: ${res.status} ${text}`.trim());
+//     }
+//     // JSONのみを想定
+//     return (await res.json()) as T;
+//   } finally {
+//     clearTimeout(id);
+//   }
+// }const isAbsoluteUrl = /^https?:\/\//i.test(path);
+
+const isAbsoluteUrl = /^https?:\/\//i.test(path);
+const url = isAbsoluteUrl ? path : `${BASE}${path}`;
+
+const res = await fetch(url, {
+  cache: "no-store",
+  headers: { "Content-Type": "application/json", ...(rest.headers || {}) },
+  signal: controller.signal,
+  ...rest,
+});
+
+if (!res.ok) {
+  const text = await res.text().catch(() => "");
+  throw new Error(`${rest.method ?? "GET"} ${path} failed: ${res.status} ${text}`.trim());
+}
+
+return (await res.json()) as T;
+} finally {
+clearTimeout(id);
+}
 }
 
 type Json = unknown;

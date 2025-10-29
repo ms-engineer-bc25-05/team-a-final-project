@@ -12,6 +12,9 @@ export const HeartbeatSchema = z.object({
       (val) => !isNaN(Date.parse(val)),
       "タイムスタンプ形式が不正です"
     ),
+    title: z.string().optional(),
+    category: z.string().optional(),
+    description: z.string().optional(),
 });
 
 export type Heartbeat = z.infer<typeof HeartbeatSchema>;

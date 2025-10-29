@@ -21,7 +21,7 @@ router.get("/daily", async (req: Request, res: Response): Promise<void> => {
     const snapshot = await db
       .collection("records")
       .where("userId", "==", userId)
-      .where("date", "==", today)
+      .where("date", "==", today) 
       .get();
     
     const records = snapshot.docs.map((doc) => ({
@@ -81,7 +81,7 @@ router.get("/weekly", async (req: Request, res: Response): Promise<void> => {
     
   }
 });
-/** POST /api/records/monthly
+/** GET /api/records/monthly
  * 今月の行動記録を返す
  */
 router.get("/monthly", async (req: Request, res: Response): Promise<void> => {

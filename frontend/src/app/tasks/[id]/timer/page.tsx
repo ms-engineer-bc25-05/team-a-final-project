@@ -2,6 +2,7 @@
 
 import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { auth } from "@/lib/firebase";
 
 /**
  * NOTE:
@@ -46,14 +47,46 @@ export default function TimerPage() {
   // NOTE: 進捗率を算出（SVG描画用）
   const progress = (secondsLeft / totalSeconds) * 100;
 
-  // TODO: 完了時に /api/tasks/:id/complete へ保存処理を追加予定
-  const handleComplete = () => {
-    setIsRunning(false);
-    alert("おつかれさまです！");
-    if (taskId) {
-      router.push(`/tasks/${taskId}/complete`);
+  
+const handleComplete = async () => {
+  if (!taskId) return;
+
+  try {
+    console.log("🚀 Completing heartbeat session:", taskId);
+
+    // 👇 現在ログインしているユーザーを取得
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      alert("ログインが必要です。");
+      return;
     }
-  };
+
+    // PATCH リクエスト送信（userIdを追加）
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/heartbeat/${taskId}/complete`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.uid, 
+        }),
+      }
+    );
+
+    const data = await res.json();
+    console.log("✅ Complete response:", data);
+
+    if (!res.ok) throw new Error(data.message || "Failed to complete session");
+
+    alert("おつかれさまです！");
+    router.push(`/tasks/${taskId}/complete`);
+  } catch (err) {
+    console.error("❌ Failed to complete session:", err);
+    alert("セッション完了処理に失敗しました。もう一度お試しください。");
+  } finally {
+    setIsRunning(false);
+  }
+};
 
   return (
     <main className="min-h-screen bg-linear-to-b from-[#FAFCFD] to-[#F7FBFC] flex flex-col items-center justify-start pt-16 pb-24 text-center">
