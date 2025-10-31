@@ -69,7 +69,7 @@ function TimeSelect({ value, onChange, className = "" }: TimeSelectProps) {
           ref={panelRef}
           className="absolute left-0 top-full mt-2 z-50 w-full
                      bg-white border border-[#c8dbe4] rounded-2xl shadow-lg
-                     max-h-[240px] overflow-y-auto"
+                     max-h-60 overflow-y-auto"
           role="listbox"
         >
           {times.map((t) => {
