@@ -80,7 +80,11 @@ export default function SurveyPage() {
 
   return (
     <AuthLayout title="アンケート" showCard={false}>
-      <div className="min-h-screen bg-linear-to-b from-[#FAFCFD] to-[#F2F8FA] px-6 py-10 overflow-y-auto">
+      <div className="min-h-screen bg-linear-to-b from-[#FAFCFD] to-[#F2F8FA] px-6 pt-8 pb-4 overflow-y-auto">
+      <p className="text-sm sm:text-base text-[#527288] leading-relaxed text-center mt-2 mb-6">
+       いくつかの質問に答えると、<br />
+       あなたに合った“ちょうどいい行動”を提案します。
+      </p>
         <form
           onSubmit={handleSubmit}
           className="space-y-8 w-full max-w-md mx-auto text-[#2C4D63]"
