@@ -263,7 +263,7 @@ export default function SuggestionsPage() {
         className="relative flex flex-col justify-between min-h-dvh px-5 pt-12 pb-[calc(env(safe-area-inset-bottom)+80px)] text-[#2c4d63]"
       >
         {/* タイトル */}
-        <h1 className="text-2xl font-bold text-[#2c4d63] text-center tracking-wide">
+        <h1 className="text-2xl font-bold text-[#2c4d63] text-center tracking-wide mb-7 sm:mb-10">
           あなたへの提案
         </h1>
 
@@ -305,13 +305,13 @@ export default function SuggestionsPage() {
                     </span>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-[16px] sm:text-[18px] font-bold text-[#26485E] tracking-wide">
+                      <h3 className="text-[18px] sm:text-[20px] font-semibold text-[#163A4D] tracking-wide leading-snug">
                         {s.title}
                       </h3>
-                      <p className="text-sm sm:text-base text-[#547386]">
+                      <p className="text-[15px] sm:text-[16px] text-[#365E6F] font-medium mt-0.5">
                         {s.time}
                       </p>
-                      <p className="mt-0.5 text-[13px] sm:text-[14px] text-[#7A9AA9] leading-snug line-clamp-3">
+                      <p className="mt-1 text-[15px] sm:text-[15.5px] text-[#3E6072] leading-[1.8]">
                         {s.description}
                       </p>
                     </div>
@@ -355,7 +355,7 @@ export default function SuggestionsPage() {
                transition-all duration-200"
                 onClick={handleSkip}
               >
-                スキップ
+                別の提案をみる
               </motion.button>
             </motion.div>
           </>

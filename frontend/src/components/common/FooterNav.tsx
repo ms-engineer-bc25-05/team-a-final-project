@@ -33,7 +33,7 @@ export default function FooterNav() {
             key={path}
             onClick={() => router.push(path)}
             className={`flex flex-col items-center transition ${
-              active ? "text-[#2C4D63]" : "text-[#9AB6C3] hover:text-[#5D8398]"
+              active ? "text-[#2C4D63]" : "text-[#6C8FA1] hover:text-[#4B7085]"
             }`}
           >
             <Icon

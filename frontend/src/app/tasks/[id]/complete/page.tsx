@@ -10,6 +10,7 @@ import { getHeroLevel } from "@/hooks/getHeroLevel";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import AuthLayout from "@/components/auth/AuthLayout";
+import { Trophy  } from "lucide-react";
 
 /**
  * NOTE:
@@ -164,8 +165,12 @@ export default function TaskCompletePage({ params }: { params: Promise<{ id: str
           transition={{ delay: 1.2, duration: 1 }}
           className="text-[#476272] text-lg font-semibold tracking-wide leading-relaxed text-center mb-10"
         >
-          {taskTitle}を完了!<br />
-          <span className="text-[#2c4d63] font-semibold">よくがんばりました ☀️</span>
+          {taskTitle}を完了!
+          <br />
+          <span className="flex items-center justify-center gap-2 text-[#2c4d63] font-semibold">
+            よくがんばりました 
+            <Trophy className="w-6 h-6 text-[#F5C542] drop-shadow-[0_0_6px_rgba(245,197,66,0.4)]"/>
+          </span>
         </motion.p>
 
         {/* ボタン群 */}
