@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
+import { Clock } from "lucide-react";
 
 /**
  * NOTE:
@@ -78,7 +79,6 @@ const handleComplete = async () => {
 
     if (!res.ok) throw new Error(data.message || "Failed to complete session");
 
-    alert("おつかれさまです！");
     router.push(`/tasks/${taskId}/complete`);
   } catch (err) {
     console.error("❌ Failed to complete session:", err);
@@ -95,7 +95,8 @@ const handleComplete = async () => {
         <h1 className="flex items-center justify-center gap-2 text-2xl font-bold text-[#2C4D63] text-center tracking-wide 
                        max-w-[90%] truncate mx-auto whitespace-nowrap overflow-hidden text-ellipsis mb-5"
         >
-          ⏱️&nbsp; {taskTitle}
+          <Clock className="w-6 h-6 text-[#2C4D63]" />
+          {taskTitle}
         </h1>
         <p className="text-sm text-[#6B94A3]">
           無理せず、ゆっくりいきましょう。

@@ -1,4 +1,3 @@
-// frontend/next.config.ts
 import type { NextConfig } from "next";
 
 /**
@@ -15,13 +14,13 @@ const RAW_BACKEND =
   process.env.BACKEND_ORIGIN ??
   "http://localhost:4000";
 
-// 末尾スラッシュの二重化を防止（例: http://localhost:4000/ ではなく http://localhost:4000 に統一）
+// 末尾スラッシュの二重化を防止
 const BACKEND = RAW_BACKEND.replace(/\/+$/, "");
 
 /**
- * /api/* を丸ごとバックエンドへプロキシ。
- * - クッキー/ヘッダもそのまま転送されるので CORS 設定不要。
- * - フロントからは常に /api/... を叩けばOK（実体は BACKEND 側の /api/... へ転送）。
+ * Next.js 全体設定
+ * - /api/* → backend へプロキシ転送
+ * - 開発モードの Next.js Dev Overlay（黒い「N」ロゴ）を完全に無効化
  */
 const nextConfig: NextConfig = {
   async rewrites() {
@@ -32,13 +31,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
   /**
-   * もし monorepo 等で “workspace root を誤推定” 警告が出る場合は、
-   * outputFileTracingRoot を明示する（今回の構成では通常不要）。
-   *
-   * 例:
-   * outputFileTracingRoot: require("path").join(__dirname, ".."),
+   * 🔧 Dev Overlay 完全無効化
+   * - devIndicators だけでは Next.js 15 では不十分
+   * - env で NEXT_DISABLE_DEV_INDICATOR を明示する
    */
+  devIndicators: {
+    buildActivity: false,
+    appIsrStatus: false,
+  },
+
+  env: {
+    NEXT_DISABLE_DEV_INDICATOR: "true",
+  },
 };
 
 export default nextConfig;
