@@ -13,8 +13,8 @@ import FooterNav from "@/components/common/FooterNav";
 export default function RestDonePage() {
   return (
     <div
-      className="min-h-[100dvh] flex flex-col justify-between 
-                 bg-gradient-to-b from-[#CDE9F6] via-[#E9F7FB] to-[#FDF6E3]
+      className="min-h-dvh flex flex-col justify-between 
+                 bg-linear-to-b from-[#CDE9F6] via-[#E9F7FB] to-[#FDF6E3]
                  relative overflow-x-hidden"
     >
       {/* メインコンテンツ */}
