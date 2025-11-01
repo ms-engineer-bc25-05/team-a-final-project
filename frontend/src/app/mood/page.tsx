@@ -162,10 +162,10 @@ export default function MoodPage() {
               className={`flex items-center justify-center rounded-full w-24 h-24 border transition-all duration-200 ${
                 selectedMood === mood.value
                   ? mood.value === "high"
-                    ? "bg-[#FFF6D9] border-[#FFD166] text-[#D98A00] scale-105"
+                    ? "bg-[#FFEFF4] border-[#F9C6D3] text-[#B65C7C] scale-105"
                     : mood.value === "normal"
-                    ? "bg-[#E8F7FA] border-[#A8D2E8] text-[#2C4D63] scale-105"
-                    : "bg-[#FFE8E8] border-[#FFB6B6] text-[#B65C5C] scale-105"
+                    ? "bg-[#FFF6D9] border-[#FFD166] text-[#D98A00] scale-105" 
+                    : "bg-[#E5FAEE] border-[#A7E0B8] text-[#2F7A4B] scale-105"
                   : "bg-white text-[#4A6A7A] border-[#D7E6EC] hover:text-[#2C4D63] hover:bg-[#F5FBFD]"
               }`}
             >
