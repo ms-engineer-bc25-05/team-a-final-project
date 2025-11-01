@@ -79,7 +79,6 @@ const handleComplete = async () => {
 
     if (!res.ok) throw new Error(data.message || "Failed to complete session");
 
-    alert("おつかれさまです！");
     router.push(`/tasks/${taskId}/complete`);
   } catch (err) {
     console.error("❌ Failed to complete session:", err);

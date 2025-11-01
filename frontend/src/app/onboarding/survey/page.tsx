@@ -71,7 +71,6 @@ export default function SurveyPage() {
       });
 
       if (!res.ok) throw new Error("送信に失敗しました。");
-      alert("アンケートを送信しました！");
       router.push("/mood");
     } catch {
       alert("ネットワークエラーが発生しました。");

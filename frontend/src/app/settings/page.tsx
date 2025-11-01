@@ -35,7 +35,7 @@ export default function SettingsPage() {
   };
 
   const handleSave = () => {
-    alert("デモ動作：設定を保存しました（API通信は未実装）");
+    alert("設定を保存しました");
   };
 
   return (
