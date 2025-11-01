@@ -37,7 +37,7 @@ export default function RestDonePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 1 }}
         >
-          今はゆっくり休みましょう
+          今日はゆっくり休みましょう
         </motion.h2>
       </div>
 
