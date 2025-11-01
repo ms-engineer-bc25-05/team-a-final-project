@@ -355,7 +355,7 @@ export default function SuggestionsPage() {
                transition-all duration-200"
                 onClick={handleSkip}
               >
-                スキップ
+                ほかの提案をみる
               </motion.button>
             </motion.div>
           </>
