@@ -53,11 +53,7 @@ export default function TaskCompletePage({ params }: { params: Promise<{ id: str
       const task = querySnap.docs[0].data();
       const taskDuration = task.elapsedTime ?? task.minutes ?? task.durationMin ?? 0;
 
-      console.log("🧩 Task snapshot data:", task);
-
       setTaskTitle(task.title ?? "Untitled Task");
-
-      console.log("⏱️ タスク時間:", taskDuration);
 
       // XP算出
       const xpToAdd = getXPByDuration(taskDuration);

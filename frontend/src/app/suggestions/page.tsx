@@ -43,11 +43,9 @@ export default function SuggestionsPage() {
   // 起動時にAPIが使えるなら取得して上書き（使えない場合は既存ダミーのまま）
   useEffect(() => {
     if (loading) {
-      console.log("⏳ 認証セッション復元中...");
       return;
     }
     if (!user) {
-      console.warn("⚠️ ユーザーが未ログインです");
       return;
     }
     let cancelled = false;
@@ -58,11 +56,8 @@ export default function SuggestionsPage() {
 
         const user = auth.currentUser;
         if (!user) {
-          console.warn("ユーザーが未ログインです");
           return;
         }
-
-        console.log("🛰️ Fetching suggestions for:", user.uid);
 
         const res = await postJson<{ suggestions: Suggestion[] }>(
           "/api/suggestions",
@@ -80,7 +75,6 @@ export default function SuggestionsPage() {
           },
           { timeoutMs: 60000 }
         );
-        console.log("✅ API response:", res);
 
         const list = res.suggestions;
         const times = ["15分", "20分", "25分", "30分"];
@@ -130,8 +124,6 @@ export default function SuggestionsPage() {
         setIsLoading(false);
         return;
       }
-
-      console.log("🛰️ Fetching suggestions for:", user.uid);
 
       const res = await postJson<{ suggestions: Suggestion[] }>(
         "/api/suggestions",
@@ -190,7 +182,6 @@ export default function SuggestionsPage() {
     }
 
     try {
-      console.log("🚀 Sending heartbeat start request...");
 
       // バックエンドにセッションを登録（Firestore経由でheartbeatsに記録）
       const res = await postJson<{ ok: boolean; sessionId: string }>(
@@ -204,8 +195,6 @@ export default function SuggestionsPage() {
         category: "運動",
         description: selected.description, 
       });
-
-      console.log(" Heartbeat created:", res.sessionId);
 
       startTransition(() => {
         router.push(

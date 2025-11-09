@@ -53,7 +53,6 @@ const handleComplete = async () => {
   if (!taskId) return;
 
   try {
-    console.log("🚀 Completing heartbeat session:", taskId);
 
     // 👇 現在ログインしているユーザーを取得
     const currentUser = auth.currentUser;
@@ -75,7 +74,6 @@ const handleComplete = async () => {
     );
 
     const data = await res.json();
-    console.log("✅ Complete response:", data);
 
     if (!res.ok) throw new Error(data.message || "Failed to complete session");
 

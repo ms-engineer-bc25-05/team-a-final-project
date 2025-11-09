@@ -12,7 +12,7 @@ import { getHeroLevel } from "@/lib/logic/xpRules";
 import { doc, getDoc } from "firebase/firestore"; 
 import { db } from "@/lib/firebase"; 
 
-console.log("🔧 NEXT_PUBLIC_API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+// console.log("🔧 NEXT_PUBLIC_API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
 
 /**
  * NOTE:
@@ -47,9 +47,9 @@ type HeroInfo = {
 };
 
 const fetcher = async (url: string): Promise<RecordsResponse> => {
-  console.log("🌐 Fetching URL:", url);
+  // console.log("🌐 Fetching URL:", url);
   const res = await fetch(url);
-  console.log("🌐 Response URL (final):", res.url);
+  // console.log("🌐 Response URL (final):", res.url);
   if (!res.ok) throw new Error("Failed to fetch");
   return res.json();
 };
@@ -90,8 +90,8 @@ export default function RecordsMonthlyPage(): JSX.Element {
     fetchHero();
   }, [user]);
 
-  console.log("🔍 Current user.uid:", user?.uid);
-  console.log("📘 SWR URL:", user ? `/api/records/daily?userId=${user.uid}` : "null");
+  // console.log("🔍 Current user.uid:", user?.uid);
+  // console.log("📘 SWR URL:", user ? `/api/records/daily?userId=${user.uid}` : "null");
 
   // NOTE: 現在のタブをURLから判定
   const currentTab: TabType =

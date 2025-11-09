@@ -31,7 +31,6 @@ export async function addUserXP(
 ): Promise<number> {
   try {
     if (earned <= 0) {
-      console.log("⏸️ XP=0 のため Firestore 更新をスキップしました。");
       return await fetchUserXP(userId); 
     }
 
@@ -75,8 +74,6 @@ export async function addUserXP(
       reason,
       createdAt: serverTimestamp(),
     });
-
-    console.log(`✨ ${earned} XP logged for ${userId} (${reason}), dailyCount: ${newCount}`);
 
     return newXP;
   } catch (error) {
