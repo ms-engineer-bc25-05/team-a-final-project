@@ -1,0 +1,365 @@
+# Motibo API Swagger Spec v1.0.0 (2025-11-09)
+openapi: 3.1.0
+info:
+  title: Motibo API
+  version: 1.0.0
+  description: |
+    あなたの気分と性格に合わせて、“ちょうどいい行動”を提案する習慣化アプリ「Motibo」のバックエンドAPI仕様書。
+    Express + Firebase + OpenAI + Stripe構成。  
+    mood・suggestions・records・surveys・sessions などのAPIを提供。
+
+servers:
+  - url: http://localhost:4000
+    description: Local development server
+
+paths:
+  # --------------------
+  # Health Check
+  # --------------------
+  /api/heartbeat:
+    get:
+      summary: サーバー稼働確認
+      responses:
+        '200':
+          description: サーバー稼働中
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+
+  # --------------------
+  # Mood（気分データ）
+  # --------------------
+  /api/mood:
+    post:
+      summary: 気分を送信・保存
+      description: |
+        ユーザーのその日の気分（mood）を Firestore の `moods` コレクションに登録します。
+        `mood` は `"high"`, `"normal"`, `"low"` のいずれかで指定します。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - mood
+              properties:
+                userId:
+                  type: string
+                  description: Firestore上のユーザーID
+                  example: "sm1DrXkh2ib8M1B6z1mgYMtTdZg2"
+                mood:
+                  type: string
+                  enum: [high, normal, low]
+                  description: ユーザーの現在の気分
+                  example: "normal"
+      responses:
+        '201':
+          description: 登録成功
+        '400':
+          description: 不正なリクエスト
+        '500':
+          description: サーバーエラー
+
+    get:
+      summary: 最近の気分履歴を取得
+      description: |
+        Firestore の `moods` コレクションから、指定された userId に対応する
+        最新の気分履歴を降順で取得します。
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+          description: Firestore上のユーザーID
+          example: "sm1DrXkh2ib8M1B6z1mgYMtTdZg2"
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 5
+          description: 取得件数（1〜50件）
+      responses:
+        '200':
+          description: 気分履歴の一覧
+        '400':
+          description: userIdが指定されていない
+        '500':
+          description: サーバーエラー
+
+  # --------------------
+  # Suggestions（行動提案）
+  # --------------------
+  /api/suggestions:
+    post:
+      summary: OpenAIを利用した行動提案を生成
+      description: |
+        ユーザーの気分・興味・性格をもとにAIが1日の行動提案を返す。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mood:
+                  type: string
+                  enum: [high, normal, low]
+                  example: "normal"
+                topics:
+                  type: array
+                  items: { type: string }
+                  example: ["運動", "学習", "映画鑑賞"]
+                subInterests:
+                  type: array
+                  items: { type: string }
+                  example: ["英語", "ストレッチ"]
+                count:
+                  type: integer
+                  example: 3
+                userId:
+                  type: string
+                  example: "abc123"
+      responses:
+        '200':
+          description: 提案生成成功
+        '500':
+          description: サーバーエラー
+
+  # --------------------
+  # Surveys（アンケート）
+  # --------------------
+  /api/surveys:
+    get:
+      summary: 保存済みアンケートを取得
+      responses:
+        '200':
+          description: Firestoreからアンケート取得成功
+        '500':
+          description: サーバーエラー
+
+    post:
+      summary: アンケート回答をFirestoreに保存
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - lifestyle
+                - freeTimeWeekday
+                - freeTimeWeekend
+                - interests
+                - personalityQ1
+                - personalityQ2
+              properties:
+                userId:
+                  type: string
+                  example: "sm1DrXkh2ib8M1B6z1mgYMtTdZg2"
+                lifestyle:
+                  type: string
+                  example: "夜型"
+                freeTimeWeekday:
+                  type: string
+                  example: "20:00〜23:00"
+                freeTimeWeekend:
+                  type: string
+                  example: "13:00〜18:00"
+                interests:
+                  type: array
+                  items: { type: string }
+                  example: ["運動", "学習", "映画鑑賞"]
+                personalityQ1:
+                  type: string
+                  enum: ["マイペース型", "アクティブ型"]
+                  example: "マイペース型"
+                personalityQ2:
+                  type: string
+                  enum: ["インドア型", "アウトドア型"]
+                  example: "インドア型"
+      responses:
+        '201':
+          description: 登録成功
+        '500':
+          description: サーバーエラー
+
+  # --------------------
+  # Records（達成記録）
+  # --------------------
+  /api/records/daily:
+    get:
+      summary: 今日の行動記録を取得
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 当日の行動データ
+        '500':
+          description: サーバーエラー
+
+  /api/records/weekly:
+    get:
+      summary: 直近7日間の行動記録を取得
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 直近7日分の行動データ
+        '500':
+          description: サーバーエラー
+
+  /api/records/monthly:
+    get:
+      summary: 今月の行動記録を取得
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 月間行動記録一覧
+        '500':
+          description: サーバーエラー
+
+  # --------------------
+  # Sessions（行動セッション）
+  # --------------------
+  /api/sessions:
+    post:
+      summary: セッションを新規作成
+      description: |
+        Firestore の `sessions` コレクションに新しいドキュメントを作成し、
+        `status: active` として開始時刻を登録する。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  example: "sm1DrXkh2ib8M1B6z1mgYMtTdZg2"
+                activityType:
+                  type: string
+                  example: "運動"
+                suggestion:
+                  type: object
+                  properties:
+                    title: { type: string, example: "ジムで軽く筋トレ" }
+                    time: { type: string, example: "30分" }
+                    difficulty: { type: string, example: "中" }
+                    reason: { type: string, example: "体を動かしてリフレッシュする" }
+      responses:
+        '201':
+          description: セッション作成成功
+        '500':
+          description: サーバーエラー
+
+  /api/sessions/{id}/pause:
+    patch:
+      summary: セッションを一時停止
+      description: |
+        対象セッションの status を "paused" に変更し、
+        pauseHistory 配列に { pausedAt: 現在時刻 } を追加する。
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          example: "abcd1234"
+      responses:
+        '200':
+          description: 一時停止成功
+        '500':
+          description: 一時停止処理エラー
+
+  /api/sessions/{id}/resume:
+    patch:
+      summary: セッションを再開
+      description: |
+        status を "active" に戻し、pauseHistory 配列に { resumedAt: 現在時刻 } を追加する。
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          example: "abcd1234"
+      responses:
+        '200':
+          description: 再開成功
+        '500':
+          description: 再開処理エラー
+
+  /api/sessions/{id}/complete:
+    patch:
+      summary: セッションを完了
+      description: |
+        status を "completed" に更新し、終了時刻（endTime）を登録する。
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          example: "abcd1234"
+      responses:
+        '200':
+          description: 完了成功
+        '500':
+          description: 完了処理エラー
+
+  # --------------------
+  # Payments（Stripe決済）
+  # --------------------
+  /api/payments/create-checkout-session:
+    post:
+      summary: Stripe Checkout セッションを作成
+      description: |
+        プレミアムプラン購入用の Stripe Checkout セッションを作成し、
+        フロントエンドで決済画面へリダイレクトするための URL を返す。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - userEmail
+              properties:
+                userId:
+                  type: string
+                  example: "sm1DrXkh2ib8M1B6z1mgYMtTdZg2"
+                userEmail:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+      responses:
+        '200':
+          description: Checkout セッションURLを返却
+        '500':
+          description: Stripe API エラー
