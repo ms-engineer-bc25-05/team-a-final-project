@@ -13,6 +13,7 @@ export function middleware(req: NextRequest) {
 
   // 認証不要のプレフィックス（先頭一致）
   const publicPaths = [
+    "/",
     "/login",
     "/register",
     "/api",

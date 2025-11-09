@@ -1,8 +1,9 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import AuthLayout from "@/components/auth/AuthLayout";
+import { auth } from "@/lib/firebase";
+import { Clock } from "lucide-react";
 
 /**
  * NOTE:
@@ -14,10 +15,14 @@ import AuthLayout from "@/components/auth/AuthLayout";
 export default function TimerPage() {
   const router = useRouter();
   const params = useSearchParams();
+  
 
   // NOTE: クエリからタスク情報を取得（例: /timer?title=読書&minutes=25）
   const taskTitle = params.get("title") || "このタスク";
   const taskMinutes = Number(params.get("minutes")) || 25;
+
+  const { id } = useParams();
+  const taskId = id;
 
   // NOTE: 残り時間を秒単位で保持
   const totalSeconds = taskMinutes * 60;
@@ -43,136 +48,117 @@ export default function TimerPage() {
   // NOTE: 進捗率を算出（SVG描画用）
   const progress = (secondsLeft / totalSeconds) * 100;
 
-  // TODO: 完了時に /api/tasks/:id/complete へ保存処理を追加予定
-  const handleComplete = () => {
+  
+const handleComplete = async () => {
+  if (!taskId) return;
+
+  try {
+    console.log("🚀 Completing heartbeat session:", taskId);
+
+    // 👇 現在ログインしているユーザーを取得
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      alert("ログインが必要です。");
+      return;
+    }
+
+    // PATCH リクエスト送信（userIdを追加）
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/heartbeat/${taskId}/complete`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.uid, 
+        }),
+      }
+    );
+
+    const data = await res.json();
+    console.log("✅ Complete response:", data);
+
+    if (!res.ok) throw new Error(data.message || "Failed to complete session");
+
+    router.push(`/tasks/${taskId}/complete`);
+  } catch (err) {
+    console.error("❌ Failed to complete session:", err);
+    alert("セッション完了処理に失敗しました。もう一度お試しください。");
+  } finally {
     setIsRunning(false);
-    alert("おつかれさまです！");
-    router.push("/tasks/complete");
-  };
-
-//   return (
-//     <AuthLayout showCard={false} showFooter={false} whiteBg>
-//     <div className="flex flex-col items-center justify-center h-[90vh] -mt-8">
-//   {/* タイトル */}
-//   <div className="text-center mt-4">
-//     <p className="text-lg font-semibold text-[#2c4d63] mb-1">
-//       ⏱️「{taskTitle}」の時間
-//     </p>
-//     <p className="text-sm text-gray-500">無理せず、ゆっくりいきましょう。</p>
-//   </div>
-
-//   {/* タイマー */}
-//   <div className="relative w-64 h-64 mt-6 mb-12">
-//     <svg className="w-full h-full" viewBox="0 0 192 192">
-//       <circle cx="96" cy="96" r="88" stroke="#e6edf1" strokeWidth="12" fill="none" />
-//       <circle
-//         cx="96"
-//         cy="96"
-//         r="88"
-//         stroke="#FFD166"
-//         strokeWidth="12"
-//         fill="none"
-//         strokeDasharray={`${2 * Math.PI * 88}`}
-//         strokeDashoffset={`${(2 * Math.PI * 88 * (100 - progress)) / 100}`}
-//         strokeLinecap="round"
-//         className="transition-all duration-500 ease-linear"
-//         transform="rotate(-90 96 96)"
-//       />
-//     </svg>
-//     <div className="absolute inset-0 flex items-center justify-center">
-//       <p className="text-5xl font-bold text-[#2C4D63]">{formatTime(secondsLeft)}</p>
-//     </div>
-//   </div>
-
-//   {/* ボタン */}
-//   <div className="flex gap-4 mb-12">
-//     {!isRunning ? (
-//       <button
-//         onClick={() => setIsRunning(true)}
-//         className="bg-[#FFD166] hover:bg-[#F4C14B] text-[#2C4D63] font-semibold py-3 px-8 rounded-xl shadow-sm transition"
-//       >
-//         開始
-//       </button>
-//     ) : (
-//       <button
-//         onClick={() => setIsRunning(false)}
-//         className="bg-[#B9DDEE] hover:bg-[#A5CBE1] text-[#2C4D63] font-semibold py-3 px-8 rounded-xl shadow-sm transition"
-//       >
-//         一時停止
-//       </button>
-//     )}
-//     <button
-//       onClick={handleComplete}
-//       className="border border-gray-300 text-gray-500 font-medium py-3 px-8 rounded-xl hover:bg-gray-100 transition"
-//     >
-//       完了
-//     </button>
-//   </div>
-// </div>
-//     </AuthLayout>
-//   );
-// }
-
+  }
+};
 
   return (
-    <AuthLayout showCard={false} showFooter={false} whiteBg>
-      <div className="flex flex-col items-center justify-start h-[85vh] -mt-4 pt-[10vh]">
-        {/* タイトル */}
-        <div className="text-center mt-2">
-          <p className="text-xl font-semibold text-[#2c4d63] mb-1">
-            ⏱️「{taskTitle}」の時間
+    <main className="min-h-screen bg-linear-to-b from-[#FAFCFD] to-[#F7FBFC] flex flex-col items-center justify-start pt-16 pb-24 text-center">
+      {/* --- Header --- */}
+      <header className="mb-14 w-full max-w-[500px] px-6">
+        <h1 className="flex items-center justify-center gap-2 text-2xl font-bold text-[#2C4D63] text-center tracking-wide 
+                       max-w-[90%] truncate mx-auto whitespace-nowrap overflow-hidden text-ellipsis mb-5"
+        >
+          <Clock className="w-6 h-6 text-[#2C4D63]" />
+          {taskTitle}
+        </h1>
+        <p className="text-sm text-[#6B94A3]">
+          無理せず、ゆっくりいきましょう。
+        </p>
+      </header>
+
+      {/* --- Timer Circle --- */}
+      <div className="relative w-64 h-64 mt-8 mb-10 drop-shadow-[0_6px_18px_rgba(255,209,102,0.25)]">
+        <svg className="w-full h-full" viewBox="0 0 192 192">
+          <circle cx="96" cy="96" r="88" stroke="#E6EDF1" strokeWidth="12" fill="none" />
+          <circle
+            cx="96"
+            cy="96"
+            r="88"
+            stroke="#FFD166"
+            strokeWidth="12"
+            fill="none"
+            strokeDasharray={`${2 * Math.PI * 88}`}
+            strokeDashoffset={`${(2 * Math.PI * 88 * (100 - progress)) / 100}`}
+            strokeLinecap="round"
+            className="transition-all duration-500 ease-linear"
+            transform="rotate(-90 96 96)"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-5xl font-bold text-[#2C4D63]">
+            {formatTime(secondsLeft)}
           </p>
-          <p className="text-sm text-gray-500">無理せず、ゆっくりいきましょう。</p>
-        </div>
-
-        {/* タイマー */}
-        <div className="relative w-64 h-64 mt-6 mb-8">
-          <svg className="w-full h-full" viewBox="0 0 192 192">
-            <circle cx="96" cy="96" r="88" stroke="#E6EDF1" strokeWidth="12" fill="none" />
-            <circle
-              cx="96"
-              cy="96"
-              r="88"
-              stroke="#FFD166"
-              strokeWidth="12"
-              fill="none"
-              strokeDasharray={`${2 * Math.PI * 88}`}
-              strokeDashoffset={`${(2 * Math.PI * 88 * (100 - progress)) / 100}`}
-              strokeLinecap="round"
-              className="transition-all duration-500 ease-linear"
-              transform="rotate(-90 96 96)"
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-5xl font-bold text-[#2C4D63]">{formatTime(secondsLeft)}</p>
-          </div>
-        </div>
-
-        {/* ボタン */}
-        <div className="flex gap-5 mb-8">
-          {!isRunning ? (
-            <button
-              onClick={() => setIsRunning(true)}
-              className="w-40 bg-[#FFD166] hover:bg-[#F4C14B] text-[#2C4D63] font-semibold py-3 rounded-xl shadow-sm transition"
-            >
-              開始
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsRunning(false)}
-              className="w-40 bg-[#B9DDEE] hover:bg-[#A5CBE1] text-[#2C4D63] font-semibold py-3 rounded-xl shadow-sm transition"
-            >
-              一時停止
-            </button>
-          )}
-          <button
-            onClick={handleComplete}
-            className="w-40 border border-[#C8D3D8] text-[#5A6A71] font-medium py-3 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition"
-          >
-            完了
-          </button>
         </div>
       </div>
-    </AuthLayout>
+
+      {/* --- Buttons --- */}
+      <div className="flex gap-5 mt-4">
+        {!isRunning ? (
+          <button
+            onClick={() => setIsRunning(true)}
+            className="w-36 bg-[#FFD166] hover:bg-[#F4C14B] text-[#2C4D63]
+                       font-semibold py-3 rounded-2xl shadow-[0_6px_18px_rgba(255,209,102,0.25)]
+                       transition-all duration-200"
+          >
+            開始
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsRunning(false)}
+            className="w-36 bg-white border border-[#D6E3E8] hover:bg-[#F7FAFB] active:bg-[#EEF5F7] text-[#2C4D63]
+                       font-semibold py-3 rounded-2xl shadow-[0_6px_18px_rgba(168,216,230,0.25)]
+                       transition-all duration-200"
+          >
+            一時停止
+          </button>
+        )}
+        <button
+          onClick={handleComplete}
+          className="w-36 bg-[#A8D8E6] hover:bg-[#9BCDE0] active:bg-[#92C2D8] text-[#2C4D63]
+                     font-semibold py-3 rounded-2xl shadow-[0_6px_18px_rgba(155,205,224,0.35)]
+                     transition-all duration-200"
+        >
+          完了
+        </button>
+      </div>
+    </main>
   );
-}
+  };
+

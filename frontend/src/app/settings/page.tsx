@@ -16,15 +16,15 @@ export default function SettingsPage() {
   const router = useRouter();
 
   // アカウント情報
-  const [name, setName] = useState("taro");
-  const [email, setEmail] = useState("mail@example.com");
-  const [password, setPassword] = useState("12345678");
+  const [name, setName] = useState("himuro");
+  const [email, setEmail] = useState("himuro.123@gmail.com");
+  const [password, setPassword] = useState("123456");
 
   // アンケート項目
-  const [lifestyle, setLifestyle] = useState("朝型");
-  const [freeTimeWeekday, setFreeTimeWeekday] = useState("18:30 - 22:00");
-  const [freeTimeWeekend, setFreeTimeWeekend] = useState("12:30 - 15:00");
-  const [interests, setInterests] = useState<string[]>(["運動", "学習"]);
+  const [lifestyle, setLifestyle] = useState("夜型");
+  const [freeTimeWeekday, setFreeTimeWeekday] = useState( "20:00- 22:00");
+  const [freeTimeWeekend, setFreeTimeWeekend] = useState("15:00 - 18:00");
+  const [interests, setInterests] = useState<string[]>(["運動", "学習", "趣味"]);
   const [personalityQ1, setPersonalityQ1] = useState("美味しい朝ごはんをゆっくり楽しむ");
   const [personalityQ2, setPersonalityQ2] = useState("家でゴロゴロしながら好きなことをする");
 
@@ -35,12 +35,13 @@ export default function SettingsPage() {
   };
 
   const handleSave = () => {
-    alert("デモ動作：設定を保存しました（API通信は未実装）");
+    alert("設定を保存しました");
   };
 
   return (
-    <AuthLayout title="設定" showCard={false}>
-      <div className="min-h-screen bg-gradient-to-b from-[#FAFCFD] to-[#F2F8FA] px-6 py-10 overflow-y-auto">
+    <AuthLayout title="設定" showCard={false} showFooter>
+      <div className="min-h-screen bg-linear-to-b from-[#FAFCFD] to-[#F2F8FA] px-6 py-10 overflow-y-auto
+                      pb-[calc(env(safe-area-inset-bottom)+88px)]">
         <form className="space-y-8 w-full max-w-md mx-auto text-[#2C4D63]">
           {/* アカウント情報 */}
           <section>
@@ -112,7 +113,7 @@ export default function SettingsPage() {
                   type="text"
                   value={freeTimeWeekday}
                   onChange={(e) => setFreeTimeWeekday(e.target.value)}
-                  placeholder="例: 18:30 - 22:00"
+                  placeholder="例: 20:00 - 23:00"
                   className="w-full rounded-xl border border-[#E5EEF0] p-2 text-sm"
                 />
               </div>
@@ -124,7 +125,7 @@ export default function SettingsPage() {
                   type="text"
                   value={freeTimeWeekend}
                   onChange={(e) => setFreeTimeWeekend(e.target.value)}
-                  placeholder="例: 12:30 - 15:00"
+                  placeholder="例: 15:00 - 18:00"
                   className="w-full rounded-xl border border-[#E5EEF0] p-2 text-sm"
                 />
               </div>

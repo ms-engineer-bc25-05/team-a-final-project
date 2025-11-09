@@ -1,12 +1,12 @@
 // frontend/src/lib/api.ts
 
 /** APIベースURL
- *  優先: NEXT_PUBLIC_BACKEND_ORIGIN / NEXT_PUBLIC_API_URL
- *  互換: NEXT_PUBLIC_API_BASE
- *  最後: http://localhost:4000
+ * 優先: NEXT_PUBLIC_API_URL
+ * 互換: NEXT_PUBLIC_BACKEND_ORIGIN / NEXT_PUBLIC_API_BASE
+ * 最後: http://localhost:4000
  */
 const BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") || 
   process.env.NEXT_PUBLIC_BACKEND_ORIGIN?.replace(/\/+$/, "") ||
   process.env.NEXT_PUBLIC_API_BASE?.replace(/\/+$/, "") ||
   "http://localhost:4000";
@@ -31,20 +31,27 @@ async function request<T>(
   const id = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(`${BASE}${path}`, {
-      cache: "no-store",
-      headers: { "Content-Type": "application/json", ...(rest.headers || {}) },
-      signal: controller.signal,
-      ...rest,
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(`${rest.method ?? "GET"} ${path} failed: ${res.status} ${text}`.trim());
-    }
-    return (await res.json()) as T;
-  } finally {
-    clearTimeout(id);
-  }
+
+const isAbsoluteUrl = /^https?:\/\//i.test(path);
+const url = isAbsoluteUrl ? path : `${BASE}${path}`;
+
+const res = await fetch(url, {
+  cache: "no-store",
+  headers: { "Content-Type": "application/json", ...(rest.headers || {}) },
+  signal: controller.signal,
+  ...rest,
+});
+
+if (!res.ok) {
+  const text = await res.text().catch(() => "");
+  throw new Error(`${rest.method ?? "GET"} ${path} failed: ${res.status} ${text}`.trim());
+}
+
+return (await res.json()) as T;
+} finally {
+clearTimeout(id);
+}
+
 }
 
 type Json = unknown;

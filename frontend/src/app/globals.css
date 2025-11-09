@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* 🧹 Next.js Dev Overlay (黒いNロゴ) を強制的に非表示 */
+#__next-build-watcher,
+[data-nextjs-dev-overlay],
+.nextjs-dev-overlay,
+.nextjs-container,
+#__next-route-announcer__ {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
