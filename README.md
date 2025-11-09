@@ -84,12 +84,22 @@ Swagger UI にて API 仕様を確認可能：
 
 ## 🧪 テスト
 
-現時点では時間の都合により、テストコード（Vitest）は未実施です。  
-今後のアップデートで以下を予定しています：
+### 現在の状態
+Vitest を用いた自動テストは今後実装予定ですが、  
+統合テスト用ページ `/short-test` を追加し、  
+バックエンドを改修せずにフロント側から以下のAPI疎通確認が可能です。
 
-- 各 API（/users, /suggestions, /records など）の正常系・異常系テストを追加  
-- `npm run test` による自動実行を設定  
-- Postman コレクションを用いた手動検証の自動化
+| テスト内容 | エンドポイント | 期待結果 |
+|-------------|----------------|-----------|
+| OpenAI 応答テスト | `POST /api/openai/short` | 入力テキストに対して JSON 応答が返る |
+| ハートビート登録 | `POST /api/heartbeat` | Firestore にレコード追加 |
+| ハートビート一覧 | `GET /api/heartbeats` | 未実装でも「データなし」で継続 |
+| 行動提案取得 | `GET /api/suggestions` | Reload で 3 件のカードが表示（429 でも継続） |
+
+### 今後の予定
+- 各 API（/users, /suggestions, /records など）の正常系・異常系テストを Vitest で追加  
+- `npm run test` による自動実行設定  
+- Postman コレクションを自動化テストに組み込み
 
 ---
 
