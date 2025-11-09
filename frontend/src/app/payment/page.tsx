@@ -79,8 +79,8 @@ export default function PaymentPage() {
           <div className="flex flex-col items-center gap-6">
              {/* NOTE: ページ説明 */}
              <p className="text-center text-[#2c4d63] text-sm leading-relaxed">
-                LEVELアップ（Lv.10以上）をご希望の方は<br />
-                プレミアムプランがおすすめです✨
+                Lv.10以上の機能やカテゴリの拡張は、<br />
+                有料プランでご利用いただけます✨
              </p>
 
              {/* NOTE: Stripe Checkoutボタン */}
