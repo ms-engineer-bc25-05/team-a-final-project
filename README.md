@@ -25,10 +25,10 @@ project-root/
 ---
 
 ## 🗄 DB設計
-```bash
+
 - ER 図（画像）: ![DB Schema](./docs/db/db-schema.png)
 - ER 図（draw.io ソース）: [docs/db/db-schema.drawio](./docs/db/db-schema.drawio)
-```
+
 
 ---
 
