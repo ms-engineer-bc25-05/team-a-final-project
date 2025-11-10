@@ -22,6 +22,16 @@ project-root/
 └── docker-compose.yml
 ```
 
+---
+
+## 🗄 DB設計
+```bash
+- ER 図（画像）: ![DB Schema](./docs/db/db-schema.png)
+- ER 図（draw.io ソース）: [docs/db/db-schema.drawio](./docs/db/db-schema.drawio)
+```
+
+---
+
 | 区分 | 使用技術 |
 |------|-----------|
 | フロントエンド | Next.js 15 / React 19 / TypeScript / Tailwind CSS / SWR / Framer Motion |
